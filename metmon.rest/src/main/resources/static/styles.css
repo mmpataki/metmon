@@ -1,0 +1,110 @@
+body {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+/* app title */
+.app-nav-bar {
+    background: darkslategray;
+    display: block;
+}
+
+.app-title-bar {
+    margin: 20px;
+    display: block;
+}
+
+.app-title {
+    color: white;
+    font-size: large;
+}
+
+
+/* pg tabs */
+.pgtab-pane {
+    float: left;
+}
+.pgtab {
+    float: left;
+    padding: 10px 30px;
+    border: solid 1px gray;
+    cursor: pointer;
+    background-color: purple;
+    color: white;
+    font-weight: bolder;
+}
+.pgtab-content {
+    
+}
+
+/* pgcontents */
+.pgdetail {
+    float: left;
+    clear: left;
+    width: 100%;
+    border: solid 1px green;
+}
+.pdetail {
+    display: block;
+    padding: 30px;
+    clear: both;
+    display: block;
+}
+.pname {
+    float: left;
+    width: 100%;
+    margin-top: 30px;
+    margin-bottom: 20px;
+    font-weight: bolder;
+    font-size: large;
+}
+.create-view-btn {
+    float: right;
+}
+
+/* create view pane */
+.create-views-pane-parent {
+    clear: both;
+    display: none;
+}
+.create-views-pane {
+    display: block;
+    clear: both;
+}
+.view-creation-input-pane {
+    clear: both;
+    padding: 10px;
+}
+.view-name-input {
+    
+}
+.create-view-submit-btn {
+    float: right;
+}
+.contexts-pane {
+    clear: both;
+    padding: 20px;
+}
+.context-keys {
+    display: none;
+}
+.metric-context {
+    border-bottom: solid 1px gray;
+    font-weight: bold;
+}
+.ctxt-expand-btn {
+    float: right;
+    cursor: pointer;
+}
+.context-keys-pane {
+    display: none;
+}
+.metric-key {
+    font-weight: normal;
+}
+.view {
+    float: left;
+    clear: none;
+    border: solid 2px lightgray;
+    border-radius: 5px;
+    margin: 10px;
+}

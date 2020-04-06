@@ -1,0 +1,317 @@
+<html>
+
+<head>
+	<link rel="stylesheet" href="./styles.css">
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
+	<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+	<script>
+		google.charts.load('current', { 'packages': ['corechart'] });
+		var app = angular.module('metmon', []);
+		var SB = 'http://localhost:8080/metmon';
+		var HTTP;
+		app.controller('index', function ($scope, $http) {
+			$scope.appName = "metmon";
+			$scope.app = { pgs: {}, visible_pg: [] };
+			HTTP = $http;
+			$http.get(`${SB}/meta/processes/procgroups`).then(
+				function (resp) {
+					if (!resp.data.success)
+						return;
+					resp.data.item.forEach(pg => {
+						$scope.app.pgs[pg] = {};
+						$scope.app.visible_pg.push(false);
+						fetchProcesses(pg);
+					});
+					$scope.app.visible_pg[0] = true;
+					$scope.app.currentPg = 0;
+				}
+			);
+
+			$scope.showPg = function (i) {
+				$scope.app.visible_pg[$scope.app.currentPg] = false;
+				$scope.app.visible_pg[i] = true;
+				$scope.app.currentPg = i;
+			}
+
+			function fetchProcesses(pg) {
+				$http.get(`${SB}/meta/processes/${pg}/processes`).then(
+					function (resp) {
+						if (!resp.data.success)
+							return;
+						resp.data.item.forEach(p => {
+							$scope.app.pgs[pg][p] = { views: {} };
+							fetchViews(pg, p);
+							fetchKeys(pg, p);
+						});
+					}
+				)
+			}
+			function fetchViews(pg, p) {
+				$http.get(`${SB}/meta/views/${pg}/${p}`).then(
+					function (resp) {
+						if (!resp.data.success)
+							return;
+						var tmp = {};
+						if (resp.data.item.length < 1)
+							return;
+						var viewsObj = resp.data.item[0];
+						viewsObj.views.forEach(v => {
+							tmp[v.name] = {};
+							tmp[v.name]["meta"] = v;
+							fetchMetrics(v);
+						});
+						$scope.app.pgs[pg][p].views = tmp;
+					}
+				);
+			}
+			function fetchKeys(pg, p) {
+				$http.get(`${SB}/meta/metrics/${pg}/${p}`).then(
+					function (resp) {
+						if (!resp.data.success)
+							return;
+						$scope.app.pgs[pg][p].keys = resp.data.item;
+					}
+				)
+			}
+			function fetchMetrics(v) {
+				var ctime = Date.now();
+				var req = {
+					from: 4,//ctime - v.vData.span.to,
+					to: ctime,
+					id: {
+						process: v.pId.process,
+						processGrp: v.pId.processGrp
+					},
+					keys: v.vData.keys
+				};
+				$http.post(`${SB}/metrics`, req).then(
+					function (resp) {
+						if (!resp.data.success)
+							alert("fetchMetrics: " + resp.data.error)
+						v["data"] = resp.data.item;
+						updateView(v);
+					}
+				);
+			}
+			var sizes = {
+				"small_size": { width: 200, height: 100 },
+				"medium_size": { width: 400, height: 200 },
+				"large_size": { width: 800, height: 400 }
+			}
+			function updateView(v) {
+				var pg = v.pId.processGrp;
+				var p = v.pId.process;
+				var type = v.vData.extra["type"];
+				var size = v.vData.extra["size"];
+				var vE;
+				var vEs = document.getElementsByClassName("view");
+				for (let i = 0; i < vEs.length; i++) {
+					vE = vEs[i];
+					if (att(vE, "procGrp") == pg && att(vE, "proc") == p && att(vE, "view") == v.name)
+						break;
+				}
+				var firstRow = true;
+				var tab = [];
+				var prevRow = [];
+				v.data.forEach(de => {
+					var tr = [];
+					if (firstRow) {
+						firstRow = false;
+						tr.push('Time');
+						prevRow.push(0);
+						de.records.forEach(e => {
+							tr.push(e.key)
+							prevRow.push(0);
+						});
+						tab.push(tr);
+						tr = [];
+					}
+					tr.push(new Date(de.ts));
+					i = 1;
+
+					var actualRow = [0];
+					de.records.forEach(e => {
+						switch (type) {
+							case "delta_type":
+								val = e.value - prevRow[i];
+								i++;
+								break;
+							case "value_type":
+								val = e.value;
+								break;
+						}
+						actualRow.push(e.value)
+						tr.push(val)
+					});
+					prevRow = actualRow;
+					tab.push(tr)
+				});
+				var data = google.visualization.arrayToDataTable(tab);
+
+				var options = {
+					title: v.name,
+					hAxis: { title: 'Time', titleTextStyle: { color: '#333' } },
+					explorer: {
+						axis: 'horizontal',
+						keepInBounds: true,
+						actions: ['dragToZoom', 'rightClickToReset']
+					},
+					width: sizes[size].width,
+					height: sizes[size].height
+				};
+
+				var chart = new google.visualization.LineChart(vE);
+				chart.draw(data, options);
+
+			}
+		});
+
+		function flip(e) {
+			if (e.style.display == "none" || e.style.display == "")
+				e.style.display = "block";
+			else
+				e.style.display = "none";
+		}
+
+		function flipViewEditor(btn) {
+			var e = findE("create-views-pane-parent", ["procGrp", att(btn, "procGrp"), "proc", att(btn, "proc")]);
+			flip(e);
+		}
+
+		function findE(className, attArray) {
+			var earr = document.getElementsByClassName(className);
+			for (let i = 0; i < earr.length; i++) {
+				const e = earr[i];
+				var m = 0;
+				for (let j = 0; j < attArray.length; j += 2) {
+					console.log(e.getAttribute(attArray[j]) + ", " + attArray[j + 1]);
+					if (e.getAttribute(attArray[j]) == attArray[j + 1])
+						m++;
+				}
+				if (m == attArray.length / 2)
+					return e;
+			}
+		}
+
+		function att(x, a) { return x.getAttribute(a) }
+
+		function createView(e) {
+			var earr = e.getElementsByTagName("input");
+			var arr = [];
+			for (let i = 0; i < earr.length; i++) {
+				if (earr[i].type == "checkbox")
+					if (earr[i].checked)
+						arr.push(earr[i].value)
+			}
+			var name = e.getElementsByClassName("view-name-input")[0].value;
+			var span = +e.getElementsByClassName("viewSpan")[0].value;
+			var vSize = e.getElementsByClassName("viewSize")[0].value;
+			var vType = e.getElementsByClassName("viewType")[0].value;
+			var pg = e.getAttribute("procGrp");
+			var p = e.getAttribute("proc");
+			var viewsReq = {
+				views: [
+					{
+						name: name,
+						vData: {
+							span: {
+								from: 0,
+								to: span
+							},
+							keys: arr,
+							extra: {
+								type: vType,
+								size: vSize
+							}
+						}
+					}
+				],
+				pId: {
+					processGrp: pg,
+					process: p
+				}
+			};
+			HTTP.post(`${SB}/meta/views`, viewsReq).then(
+				function (resp) {
+					if (!resp.data.success) {
+						alert("view cannot be created : " + resp.data.error);
+					}
+				}
+			);
+		}
+	</script>
+</head>
+
+<body ng-app="metmon" ng-controller="index">
+	<div class="app-nav-bar">
+		<div class="app-title-bar mw">
+			<span class="app-title">{{appName}}</span>
+		</div>
+	</div>
+
+	<div>
+		<div class="pgtab-pane">
+			<div ng-repeat="(key, value) in app.pgs" ng-click="showPg($index)" class="pgtab">
+				<span class="pgtab-content">{{key}}</span>
+			</div>
+		</div>
+		<div ng-repeat="(pg, procs) in app.pgs" class="pgdetail" ng-show="app.visible_pg[$index]">
+			<div ng-repeat="(p, proc) in procs" class="pdetail">
+				<div class="pname">
+					<span>{{p}}</span>
+					<button class="create-view-btn" procGrp="{{pg}}" proc="{{p}}" onclick="flipViewEditor(this)">Create
+						a view</button>
+				</div>
+
+				<!-- view creation keys -->
+				<div procGrp="{{pg}}" proc="{{p}}" class="create-views-pane-parent">
+					<div procGrp="{{pg}}" proc="{{p}}" class="create-views-pane">
+						<div class="view-creation-input-pane">
+							<input placeholder="viewname" class="view-name-input" type="text" />
+							<select class="viewSpan">
+								<option value="60000">Last minute</option>
+								<option value="3600000">Last hour</option>
+								<option value="86400000">Last day</option>
+								<option value="604800000">Last week</option>
+							</select>
+							<select class="viewType">
+								<option value="value_type">Value</option>
+								<option value="delta_type">Delta</option>
+							</select>
+							<select class="viewSize">
+								<option value="small_size">Small</option>
+								<option value="medium_size">Medium</option>
+								<option value="large_size">Large</option>
+							</select>
+							<button class="create-view-submit-btn"
+								onclick="createView(this.parentElement.parentElement)">Add</button>
+						</div>
+						<div class="contexts-pane">
+							Available metrics <br /><br />
+							<div ng-repeat="(ctxt, keys) in proc.keys.contexts" class="metric-context">
+								{{ctxt}}
+								<span class="ctxt-expand-btn" onclick="flip(this.nextElementSibling)">+</span>
+								<fieldset class="context-keys-pane">
+									<div ng-repeat="key in keys" class="metric-key">
+										<input type="checkbox" value="{{ctxt + ':' + key}}" id="{{ctxt + ':' + key}}" />
+										<label for="{{ctxt + ':' + key}}" class="metric-key">{{key}}</label>
+									</div>
+								</fieldset>
+							</div>
+						</div>
+					</div>
+				</div>
+				<!-- view creation complete -->
+
+				<!--views -->
+				<div>
+					<div ng-repeat="(v, view) in proc.views" procGrp="{{pg}}" proc="{{p}}" view="{{v}}" class="view">
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script defer="defer" src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
+</body>
+
+</html>
