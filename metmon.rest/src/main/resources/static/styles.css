@@ -1,3 +1,7 @@
+div {
+    float: left;
+    clear: both;
+}
 body {
     margin: 0 !important;
     padding: 0 !important;
@@ -6,10 +10,13 @@ body {
 .app-nav-bar {
     background: darkslategray;
     display: block;
+    clear: both;
+    float: left;
+    width: 100%;
 }
 
 .app-title-bar {
-    margin: 20px;
+    padding: 20px;
     display: block;
 }
 
@@ -22,6 +29,8 @@ body {
 /* pg tabs */
 .pgtab-pane {
     float: left;
+    clear: both;
+    margin-top: 10px;
 }
 .pgtab {
     float: left;
@@ -31,40 +40,47 @@ body {
     background-color: purple;
     color: white;
     font-weight: bolder;
+    border-top-right-radius: 10px;
 }
 .pgtab-content {
     
 }
 
 /* pgcontents */
+.pgcontent {
+    float: left;
+    clear: both;
+    padding: 20px;
+}
 .pgdetail {
     float: left;
     clear: left;
     width: 100%;
-    border: solid 1px green;
+    border-left: solid 1px teal;
+    border-top: solid 1px teal;
 }
 .pdetail {
     display: block;
     padding: 30px;
     clear: both;
     display: block;
+    float: left;
 }
 .pname {
     float: left;
     width: 100%;
-    margin-top: 30px;
-    margin-bottom: 20px;
     font-weight: bolder;
     font-size: large;
-}
-.create-view-btn {
-    float: right;
+    background-color: steelblue;
+    padding: 20px;
 }
 
 /* create view pane */
+.create-view-btn {
+    float: right;
+}
 .create-views-pane-parent {
     clear: both;
-    display: none;
 }
 .create-views-pane {
     display: block;
@@ -90,6 +106,7 @@ body {
 .metric-context {
     border-bottom: solid 1px gray;
     font-weight: bold;
+    padding: 10px;
 }
 .ctxt-expand-btn {
     float: right;
@@ -103,8 +120,35 @@ body {
 }
 .view {
     float: left;
-    clear: none;
     border: solid 2px lightgray;
     border-radius: 5px;
-    margin: 10px;
+    padding: 10px;
+}
+.view-controls {
+    clear: both;
+    float: left;
+}
+.viewarea {
+    clear: both;
+    float: left;
+}
+
+
+
+
+
+.viewoverlay {
+    position: fixed; /* Sit on top of the page content */
+    top: 20px;
+    bottom: 20px;
+    right: 20px;
+    left: 20px;
+    border: solid 3px black;
+    border-radius: 5px;
+    background-color: rgba(256,256,256,1); /* Black background with opacity */
+    z-index: 2; /* Specify a stack order in case you're using a different order for other elements */
+    cursor: pointer; /* Add a pointer on hover */
+}
+.viewEditorCloseBtn {
+    float: right;
 }

@@ -8,11 +8,74 @@
 		google.charts.load('current', { 'packages': ['corechart'] });
 		var app = angular.module('metmon', []);
 		var SB = 'http://localhost:8080/metmon';
-		var HTTP;
+
 		app.controller('index', function ($scope, $http) {
+
 			$scope.appName = "metmon";
-			$scope.app = { pgs: {}, visible_pg: [] };
-			HTTP = $http;
+
+			$scope.app = {
+				pgs: {},
+				visible_pg: [],
+				ui: {
+					views: {
+						showCreateView: false,
+						currentMetrics: {}
+					}
+				},
+				null: 0
+			};
+
+			$scope.app.timeSpans = [
+				{ value: 60000, text: "1 minute" },
+				{ value: 300000, text: "5 minutes" },
+				{ value: 900000, text: "15 minutes" },
+				{ value: 3600000, text: "1 Hour" },
+				{ value: 21600000, text: "6 Hour" },
+				{ value: 86400000, text: "1 Day" },
+				{ value: 172800000, text: "2 Days" },
+				{ value: 604800000, text: "1 Week" }
+			];
+
+			$scope.app.sizes = [
+				{ value: "small_size", text: "Small" },
+				{ value: "medium_size", text: "Medium" },
+				{ value: "large_size", text: "Large" }
+			]
+
+			$scope.app.viewTypes = [
+				{ value: "value_type", text: "Value" },
+				{ value: "delta_type", text: "Delta" }
+			];
+
+			function emptyView(pg, p) {
+				return {
+					views: [
+						{
+							name: name,
+							vData: {
+								keys: [],
+								extra: {
+									span: 60000,
+									type: "delta_type",
+									size: "small_size"
+								}
+							}
+						}
+					],
+					pId: {
+						processGrp: pg,
+						process: p
+					}
+				}
+			}
+
+			var sizeMap = {
+				"small_size": { width: 200, height: 100 },
+				"medium_size": { width: 600, height: 300 },
+				"large_size": { width: 1000, height: 500 }
+			};
+
+			/* initial setup */
 			$http.get(`${SB}/meta/processes/procgroups`).then(
 				function (resp) {
 					if (!resp.data.success)
@@ -27,19 +90,13 @@
 				}
 			);
 
-			$scope.showPg = function (i) {
-				$scope.app.visible_pg[$scope.app.currentPg] = false;
-				$scope.app.visible_pg[i] = true;
-				$scope.app.currentPg = i;
-			}
-
 			function fetchProcesses(pg) {
 				$http.get(`${SB}/meta/processes/${pg}/processes`).then(
 					function (resp) {
 						if (!resp.data.success)
 							return;
 						resp.data.item.forEach(p => {
-							$scope.app.pgs[pg][p] = { views: {} };
+							$scope.app.pgs[pg][p] = { views: {}, newView: emptyView(pg, p) };
 							fetchViews(pg, p);
 							fetchKeys(pg, p);
 						});
@@ -76,7 +133,7 @@
 			function fetchMetrics(v) {
 				var ctime = Date.now();
 				var req = {
-					from: 4,//ctime - v.vData.span.to,
+					from: ctime - v.vData.extra.span,
 					to: ctime,
 					id: {
 						process: v.pId.process,
@@ -93,18 +150,13 @@
 					}
 				);
 			}
-			var sizes = {
-				"small_size": { width: 200, height: 100 },
-				"medium_size": { width: 400, height: 200 },
-				"large_size": { width: 800, height: 400 }
-			}
 			function updateView(v) {
 				var pg = v.pId.processGrp;
 				var p = v.pId.process;
 				var type = v.vData.extra["type"];
 				var size = v.vData.extra["size"];
 				var vE;
-				var vEs = document.getElementsByClassName("view");
+				var vEs = document.getElementsByClassName("viewarea");
 				for (let i = 0; i < vEs.length; i++) {
 					vE = vEs[i];
 					if (att(vE, "procGrp") == pg && att(vE, "proc") == p && att(vE, "view") == v.name)
@@ -146,7 +198,12 @@
 					prevRow = actualRow;
 					tab.push(tr)
 				});
-				var data = google.visualization.arrayToDataTable(tab);
+				var data;
+				try {
+					data = google.visualization.arrayToDataTable(tab);
+				} catch (err) {
+					console.log(err);
+				}
 
 				var options = {
 					title: v.name,
@@ -154,18 +211,71 @@
 					explorer: {
 						axis: 'horizontal',
 						keepInBounds: true,
-						actions: ['dragToZoom', 'rightClickToReset']
+						actions: ['dragToZoom', 'rightClickToReset'],
+						maxZoomIn: 0.01
 					},
-					width: sizes[size].width,
-					height: sizes[size].height
+					width: sizeMap[size].width,
+					height: sizeMap[size].height,
+					legend: { textStyle: { fontSize: 12 } },
+					titleTextStyle: { fontSize: 15 },
+					tooltip: { textStyle: { 'background-color': 'white' }, showColorCode: true },
+					focusTarget: 'category'
 				};
 
 				var chart = new google.visualization.LineChart(vE);
 				chart.draw(data, options);
 
 			}
+
+			/* pg switcher */
+			$scope.showPg = function (i) {
+				$scope.app.visible_pg[$scope.app.currentPg] = false;
+				$scope.app.visible_pg[i] = true;
+				$scope.app.currentPg = i;
+			}
+
+			$scope.flipViewEditor = function (proc) {
+				$scope.app.ui.views = {
+					currentMetrics: proc.keys.contexts,
+					showCreateView: !$scope.app.ui.views.showCreateView
+				}
+			}
+
+			$scope.createView = function (nv) {
+				var keys = [];
+				for (let [k, v] of Object.entries(nv.keys)) {
+					if (v)
+						keys.push(k)
+				}
+				delete nv["keys"]
+				nv.views[0].vData.keys = keys
+				$http.post(`${SB}/meta/views`, nv).then(
+					function (resp) {
+						if (!resp.data.success) {
+							alert("view cannot be created : " + resp.data.error);
+						}
+					}
+				);
+			}
+
+			$scope.deleteView = function (v) {
+				if (confirm(`Delete "${v.name}"?`)) {
+					$http.delete(`${SB}/meta/views/${v.pId.processGrp}/${v.pId.process}/${v.name}`).then(function (resp) {
+						if (!resp.data.success) {
+							alert(`couldn't delete view: ${v}, error: ${resp.data.message}`);
+						}
+					});
+				}
+			}
+
+			$scope.refreshView = function (v) {
+				updateView(v.meta);
+			}
+		
+			function att(x, a) { return x.getAttribute(a) }
 		});
 
+		/* ui stuff */
 		function flip(e) {
 			if (e.style.display == "none" || e.style.display == "")
 				e.style.display = "block";
@@ -173,72 +283,6 @@
 				e.style.display = "none";
 		}
 
-		function flipViewEditor(btn) {
-			var e = findE("create-views-pane-parent", ["procGrp", att(btn, "procGrp"), "proc", att(btn, "proc")]);
-			flip(e);
-		}
-
-		function findE(className, attArray) {
-			var earr = document.getElementsByClassName(className);
-			for (let i = 0; i < earr.length; i++) {
-				const e = earr[i];
-				var m = 0;
-				for (let j = 0; j < attArray.length; j += 2) {
-					console.log(e.getAttribute(attArray[j]) + ", " + attArray[j + 1]);
-					if (e.getAttribute(attArray[j]) == attArray[j + 1])
-						m++;
-				}
-				if (m == attArray.length / 2)
-					return e;
-			}
-		}
-
-		function att(x, a) { return x.getAttribute(a) }
-
-		function createView(e) {
-			var earr = e.getElementsByTagName("input");
-			var arr = [];
-			for (let i = 0; i < earr.length; i++) {
-				if (earr[i].type == "checkbox")
-					if (earr[i].checked)
-						arr.push(earr[i].value)
-			}
-			var name = e.getElementsByClassName("view-name-input")[0].value;
-			var span = +e.getElementsByClassName("viewSpan")[0].value;
-			var vSize = e.getElementsByClassName("viewSize")[0].value;
-			var vType = e.getElementsByClassName("viewType")[0].value;
-			var pg = e.getAttribute("procGrp");
-			var p = e.getAttribute("proc");
-			var viewsReq = {
-				views: [
-					{
-						name: name,
-						vData: {
-							span: {
-								from: 0,
-								to: span
-							},
-							keys: arr,
-							extra: {
-								type: vType,
-								size: vSize
-							}
-						}
-					}
-				],
-				pId: {
-					processGrp: pg,
-					process: p
-				}
-			};
-			HTTP.post(`${SB}/meta/views`, viewsReq).then(
-				function (resp) {
-					if (!resp.data.success) {
-						alert("view cannot be created : " + resp.data.error);
-					}
-				}
-			);
-		}
 	</script>
 </head>
 
@@ -249,67 +293,76 @@
 		</div>
 	</div>
 
-	<div>
+	<div class="pgcontent">
 		<div class="pgtab-pane">
-			<div ng-repeat="(key, value) in app.pgs" ng-click="showPg($index)" class="pgtab">
-				<span class="pgtab-content">{{key}}</span>
+			<div ng-repeat="(pgName, pg) in app.pgs" ng-click="showPg($index)" class="pgtab">
+				<span class="pgtab-content">{{pgName}}</span>
 			</div>
 		</div>
+
 		<div ng-repeat="(pg, procs) in app.pgs" class="pgdetail" ng-show="app.visible_pg[$index]">
 			<div ng-repeat="(p, proc) in procs" class="pdetail">
 				<div class="pname">
 					<span>{{p}}</span>
-					<button class="create-view-btn" procGrp="{{pg}}" proc="{{p}}" onclick="flipViewEditor(this)">Create
-						a view</button>
+					<button class="create-view-btn" proc="{{p}}" ng-click="flipViewEditor(proc)">
+						Create a view
+					</button>
 				</div>
-
-				<!-- view creation keys -->
-				<div procGrp="{{pg}}" proc="{{p}}" class="create-views-pane-parent">
-					<div procGrp="{{pg}}" proc="{{p}}" class="create-views-pane">
-						<div class="view-creation-input-pane">
-							<input placeholder="viewname" class="view-name-input" type="text" />
-							<select class="viewSpan">
-								<option value="60000">Last minute</option>
-								<option value="3600000">Last hour</option>
-								<option value="86400000">Last day</option>
-								<option value="604800000">Last week</option>
-							</select>
-							<select class="viewType">
-								<option value="value_type">Value</option>
-								<option value="delta_type">Delta</option>
-							</select>
-							<select class="viewSize">
-								<option value="small_size">Small</option>
-								<option value="medium_size">Medium</option>
-								<option value="large_size">Large</option>
-							</select>
-							<button class="create-view-submit-btn"
-								onclick="createView(this.parentElement.parentElement)">Add</button>
-						</div>
-						<div class="contexts-pane">
-							Available metrics <br /><br />
-							<div ng-repeat="(ctxt, keys) in proc.keys.contexts" class="metric-context">
-								{{ctxt}}
-								<span class="ctxt-expand-btn" onclick="flip(this.nextElementSibling)">+</span>
-								<fieldset class="context-keys-pane">
-									<div ng-repeat="key in keys" class="metric-key">
-										<input type="checkbox" value="{{ctxt + ':' + key}}" id="{{ctxt + ':' + key}}" />
-										<label for="{{ctxt + ':' + key}}" class="metric-key">{{key}}</label>
-									</div>
-								</fieldset>
+				<div class="viewoverlay" ng-show="app.ui.views.showCreateView">
+					<div class="create-views-pane-parent">
+						<h3>Create view for {{pg + '/' + p}}</h3>
+						<div class="create-views-pane">
+							<div class="view-creation-input-pane">
+								<input placeholder="viewname" class="view-name-input" type="text"
+									ng-model="proc.newView.views[0].name" />
+								<select class="viewSpan" ng-model="proc.newView.views[0].vData.extra.span"
+									ng-options="tspan.value as tspan.text for tspan in app.timeSpans">
+								</select>
+								<select class="viewType" ng-model="proc.newView.views[0].vData.extra.type"
+									ng-options="vtype.value as vtype.text for vtype in app.viewTypes">
+								</select>
+								<select class="viewSize" ng-model="proc.newView.views[0].vData.extra.size"
+									ng-options="vsize.value as vsize.text for vsize in app.sizes">
+								</select>
+								<button class="create-view-submit-btn" ng-click="createView(proc.newView)">Add</button>
+							</div>
+							<div class="contexts-pane">
+								<h4>Available metrics</h4>
+								<div ng-repeat="(ctxt, keys) in app.ui.views.currentMetrics" class="metric-context">
+									{{ctxt}}
+									<span class="ctxt-expand-btn" onclick="flip(this.nextElementSibling)">+</span>
+									<fieldset class="context-keys-pane">
+										<div ng-repeat="key in keys" class="metric-key">
+											<input type="checkbox" value="{{ctxt + ':' + key}}"
+												id="{{ctxt + ':' + key}}"
+												ng-model="proc.newView.keys[ctxt + ':' + key]" />
+											<label for="{{ctxt + ':' + key}}" class="metric-key">{{key}}</label>
+										</div>
+									</fieldset>
+								</div>
 							</div>
 						</div>
 					</div>
+					<button class="viewEditorCloseBtn" ng-click="flipViewEditor(proc)">X</button>
 				</div>
-				<!-- view creation complete -->
 
 				<!--views -->
 				<div>
-					<div ng-repeat="(v, view) in proc.views" procGrp="{{pg}}" proc="{{p}}" view="{{v}}" class="view">
+					<div ng-repeat="(v, view) in proc.views" class="view">
+						<div class="view-controls">
+							<select ng-change="refreshView(view)" ng-model="view.meta.vData.extra.span"
+								ng-options="tspan.value as tspan.text for tspan in app.timeSpans">
+							</select>
+							<button ng-click="deleteView(view.meta)">Delete</button>
+						</div>
+						<div procGrp="{{pg}}" proc="{{p}}" view="{{v}}" class="viewarea"></div>
 					</div>
 				</div>
 			</div>
 		</div>
+
+
+
 	</div>
 	<script defer="defer" src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
 </body>
