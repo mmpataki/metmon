@@ -12,17 +12,8 @@ import metmon.store.StoreCell;
 public class View extends StoreCell<String, String> {
 
 	public static class ViewData {
-		Span span;
 		Map<String, String> extra;
 		Set<String> keys;
-
-		public Span getSpan() {
-			return span;
-		}
-
-		public void setSpan(Span span) {
-			this.span = span;
-		}
 
 		public Set<String> getKeys() {
 			return keys;
@@ -40,9 +31,8 @@ public class View extends StoreCell<String, String> {
 			this.extra = extra;
 		}
 
-		public ViewData(Span span, Set<String> keys) {
+		public ViewData(Set<String> keys) {
 			super();
-			this.span = span;
 			this.keys = keys;
 		}
 
@@ -58,8 +48,6 @@ public class View extends StoreCell<String, String> {
 			ViewData v = (ViewData)obj;
 			if(v==this)
 				return true;
-			if(!v.getSpan().equals(getSpan()))
-				return false;
 			if(!v.getKeys().equals(getKeys()))
 				return false;
 			return true;

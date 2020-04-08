@@ -11,7 +11,6 @@ import org.junit.Test;
 import org.springframework.context.annotation.DependsOn;
 
 import metmon.model.meta.MetaRecord;
-import metmon.model.meta.Span;
 import metmon.model.meta.View;
 import metmon.model.meta.Views;
 import metmon.model.meta.View.ViewData;
@@ -84,7 +83,7 @@ public class ControllerTest extends TestBase {
 	@DependsOn("basicMetricsIngestion")
 	public void testViewsApi() throws RESTException {
 		Set<String> s = Arrays.asList(keys).stream().map(k -> ctxt + ":" + k).collect(Collectors.toSet());
-		View vc = new View(mrid, "myView", new ViewData(new Span(0, 100), s));
+		View vc = new View(mrid, "myView", new ViewData(s));
 		Views vs = new Views();
 		vs.addRecord(vc);
 		C.createView(vs);

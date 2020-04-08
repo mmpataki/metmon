@@ -1,5 +1,6 @@
 package metmon.rest.services;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -22,6 +23,7 @@ import metmon.model.meta.Views;
 import metmon.model.metric.Metric;
 import metmon.model.metric.MetricRecord;
 import metmon.model.metric.ProcIdentifier;
+import metmon.store.DeleteRequest;
 import metmon.store.FromStoreCell;
 import metmon.store.FromStoreRecord;
 import metmon.store.Store;
@@ -48,12 +50,6 @@ public class MetaService {
 		FromStoreRecord<String, String, MetaRecord, MetaStoreEntry> f = (ts) -> new MetaRecord(ts);
 		return produce(new ProcIdentifier(procGroup, proc), MetaConsts.META_KEYS_TS, MetaConsts.META_KEYS_TS_END, f,
 				(k, v) -> new MetaStoreEntry(k, v)).get(0);
-	}
-
-	public List<Views> getAvailableViews(String procGroup, String proc) throws Exception {
-		ProcIdentifier pId = new ProcIdentifier(procGroup, proc);
-		return produce(pId, MetaConsts.META_VIEWS_TS, MetaConsts.META_VIEWS_TS_END,
-				(FromStoreRecord<String, String, Views, View>) (ts) -> new Views(), (k, v) -> new View(k, v));
 	}
 
 	/* internal usage */
@@ -107,6 +103,7 @@ public class MetaService {
 				.map(d -> d.substring(d.indexOf('\0') + 1, d.length())).collect(Collectors.toList());
 	}
 
+	/* views */
 	public void createView(Views view) throws Exception {
 		Store<String, String> store = stores.open(view.getpId(), true);
 		view.setTs(MetaConsts.META_VIEWS_TS);
@@ -114,6 +111,19 @@ public class MetaService {
 			((View) c).setpId(view.getpId());
 			return c;
 		});
+	}
+
+	public void deleteView(String procGroup, String proc, String viewName) throws Exception {
+		ProcIdentifier pId = new ProcIdentifier(procGroup, proc);
+		Store<String, String> store = stores.open(pId, false);
+		store.delete(new DeleteRequest<String>(MetaConsts.META_VIEWS_TS,
+				Arrays.asList(new View(pId, viewName, null).getKey())));
+	}
+
+	public List<Views> getAvailableViews(String procGroup, String proc) throws Exception {
+		ProcIdentifier pId = new ProcIdentifier(procGroup, proc);
+		return produce(pId, MetaConsts.META_VIEWS_TS, MetaConsts.META_VIEWS_TS_END,
+				(FromStoreRecord<String, String, Views, View>) (ts) -> new Views(), (k, v) -> new View(k, v));
 	}
 
 }

@@ -49,6 +49,11 @@ public class MetaController {
 		return build(() -> MS.createView(view));
 	}
 	
+	@RequestMapping(method = RequestMethod.DELETE, path = VIEW_PATH + "/{procGroup}/{proc}/{viewName}")
+	public RESTResponse<NullObject> deleteView(@PathVariable String procGroup, @PathVariable String proc, @PathVariable String viewName) {
+		return build(() -> MS.deleteView(procGroup, proc, viewName));
+	}
+	
 	@RequestMapping(method = RequestMethod.GET, path = PROC_GROUPS_PATH)
 	public RESTResponse<List<String>> getProcGroups() {
 		return build(() -> MS.getProcGroups());

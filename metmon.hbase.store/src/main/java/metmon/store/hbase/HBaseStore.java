@@ -15,6 +15,7 @@ import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
+import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
@@ -23,6 +24,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 import metmon.conf.MetmonConfiguration;
 import metmon.store.BaseStore;
+import metmon.store.DeleteRequest;
 import metmon.store.FromStoreCell;
 import metmon.store.FromStoreRecord;
 import metmon.store.SerDe;
@@ -113,6 +115,8 @@ public class HBaseStore<K, V> extends BaseStore<K, V> {
 		s.setStopRow(Bytes.toBytes(req.getTo()));
 		s.setMaxVersions(1);
 		
+		s.addFamily(cf);
+		
 		int i = 0;
 		byte[][] keys = new byte[req.getKeys().size()][];
 		for (K key : req.getKeys()) {
@@ -154,6 +158,15 @@ public class HBaseStore<K, V> extends BaseStore<K, V> {
 			p.addColumn(cf, kSerde.serialize(sc.getKey()), vSerde.serialize(sc.getValue()));
 		}
 		table.put(p);
+	}
+
+	@Override
+	public void delete(DeleteRequest<K> del) throws Exception {
+		Delete d = new Delete(Bytes.toBytes(del.getTs()));
+		for (K k : del.getKeys()) {
+			d.addColumn(cf, kSerde.serialize(k));
+		}
+		table.delete(d);
 	}
 
 }
