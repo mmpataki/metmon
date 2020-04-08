@@ -66,7 +66,7 @@
 						processGrp: pg,
 						process: p
 					}
-				}
+				};
 			}
 
 			var sizeMap = {
@@ -96,7 +96,7 @@
 						if (!resp.data.success)
 							return;
 						resp.data.item.forEach(p => {
-							$scope.app.pgs[pg][p] = { views: {}, newView: emptyView(pg, p) };
+							$scope.app.pgs[pg][p] = { views: {}, newView: emptyView(pg, p), showCreateView: false };
 							fetchViews(pg, p);
 							fetchKeys(pg, p);
 						});
@@ -115,6 +115,7 @@
 						viewsObj.views.forEach(v => {
 							tmp[v.name] = {};
 							tmp[v.name]["meta"] = v;
+							v.vData.extra.span = +v.vData.extra.span;
 							fetchMetrics(v);
 						});
 						$scope.app.pgs[pg][p].views = tmp;
@@ -234,13 +235,6 @@
 				$scope.app.currentPg = i;
 			}
 
-			$scope.flipViewEditor = function (proc) {
-				$scope.app.ui.views = {
-					currentMetrics: proc.keys.contexts,
-					showCreateView: !$scope.app.ui.views.showCreateView
-				}
-			}
-
 			$scope.createView = function (nv) {
 				var keys = [];
 				for (let [k, v] of Object.entries(nv.keys)) {
@@ -269,7 +263,7 @@
 			}
 
 			$scope.refreshView = function (v) {
-				updateView(v.meta);
+				fetchMetrics(v.meta);
 			}
 		
 			function att(x, a) { return x.getAttribute(a) }
@@ -304,11 +298,11 @@
 			<div ng-repeat="(p, proc) in procs" class="pdetail">
 				<div class="pname">
 					<span>{{p}}</span>
-					<button class="create-view-btn" proc="{{p}}" ng-click="flipViewEditor(proc)">
+					<button class="create-view-btn" ng-click="proc.showCreateView = !proc.showCreateView">
 						Create a view
 					</button>
 				</div>
-				<div class="viewoverlay" ng-show="app.ui.views.showCreateView">
+				<div class="viewoverlay" ng-show="proc.showCreateView">
 					<div class="create-views-pane-parent">
 						<h3>Create view for {{pg + '/' + p}}</h3>
 						<div class="create-views-pane">
@@ -328,7 +322,7 @@
 							</div>
 							<div class="contexts-pane">
 								<h4>Available metrics</h4>
-								<div ng-repeat="(ctxt, keys) in app.ui.views.currentMetrics" class="metric-context">
+								<div ng-repeat="(ctxt, keys) in proc.keys.contexts" class="metric-context">
 									{{ctxt}}
 									<span class="ctxt-expand-btn" onclick="flip(this.nextElementSibling)">+</span>
 									<fieldset class="context-keys-pane">
@@ -343,7 +337,7 @@
 							</div>
 						</div>
 					</div>
-					<button class="viewEditorCloseBtn" ng-click="flipViewEditor(proc)">X</button>
+					<button class="viewEditorCloseBtn" ng-click="proc.showCreateView = !proc.showCreateView">X</button>
 				</div>
 
 				<!--views -->
