@@ -188,7 +188,7 @@
 					de.records.forEach(e => {
 						switch (type) {
 							case "delta_type":
-								val = e.value - prevRow[i];
+								val = e.value - ((prevRow[i] > e.value) ? 0 : prevRow[i]);
 								i++;
 								break;
 							case "value_type":
@@ -215,7 +215,7 @@
 						axis: 'horizontal',
 						keepInBounds: true,
 						actions: ['dragToZoom', 'rightClickToReset'],
-						maxZoomIn: 0.01
+						maxZoomIn: 0.0001
 					},
 					width: sizeMap[size].width,
 					height: sizeMap[size].height,
