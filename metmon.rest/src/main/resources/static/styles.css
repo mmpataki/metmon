@@ -99,14 +99,20 @@ body {
 .contexts-pane {
     clear: both;
     padding: 20px;
+    height: auto;
+    max-height: 500;
+    overflow-y: scroll;
+    width: 100%;
 }
 .context-keys {
     display: none;
+    max-height: initial;
 }
 .metric-context {
     border-bottom: solid 1px gray;
     font-weight: bold;
     padding: 10px;
+    width: 100%;
 }
 .ctxt-expand-btn {
     float: right;
@@ -132,23 +138,21 @@ body {
     clear: both;
     float: left;
 }
-
-
-
-
-
 .viewoverlay {
-    position: fixed; /* Sit on top of the page content */
-    top: 20px;
-    bottom: 20px;
-    right: 20px;
-    left: 20px;
+    position: fixed;
+    height: auto;
+    width: auto;
+    max-height: inherit;
     border: solid 3px black;
     border-radius: 5px;
-    background-color: rgba(256,256,256,1); /* Black background with opacity */
-    z-index: 2; /* Specify a stack order in case you're using a different order for other elements */
-    cursor: pointer; /* Add a pointer on hover */
+    background-color: rgba(256,256,256,1);
+    z-index: 2000;
+    cursor: pointer;
 }
 .viewEditorCloseBtn {
     float: right;
+}
+.filesbtn {
+    background-color: white;
+    color: black;
 }

@@ -8,10 +8,12 @@
 		google.charts.load('current', { 'packages': ['corechart'] });
 		var app = angular.module('metmon', []);
 		var SB = 'http://localhost:8080/metmon';
+		var HTTP;
 
 		app.controller('index', function ($scope, $http) {
 
 			$scope.appName = "metmon";
+			HTTP = $http;
 
 			$scope.app = {
 				pgs: {},
@@ -243,13 +245,7 @@
 				}
 				delete nv["keys"]
 				nv.views[0].vData.keys = keys
-				$http.post(`${SB}/meta/views`, nv).then(
-					function (resp) {
-						if (!resp.data.success) {
-							alert("view cannot be created : " + resp.data.error);
-						}
-					}
-				);
+				createViewsInternal(nv);
 			}
 
 			$scope.deleteView = function (v) {
@@ -265,7 +261,22 @@
 			$scope.refreshView = function (v) {
 				fetchMetrics(v.meta);
 			}
-		
+
+			$scope.exportViews = function (proc) {
+				var viewsObj = { views: [] }
+				Object.values(proc).forEach(e => {
+					viewsObj.views.push({ vData: e.meta.vData, name: e.meta.name })
+				});
+
+				var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(viewsObj));
+				var downloadAnchorNode = document.createElement('a');
+				downloadAnchorNode.setAttribute("href", dataStr);
+				downloadAnchorNode.setAttribute("download", "views.json");
+				document.body.appendChild(downloadAnchorNode);
+				downloadAnchorNode.click();
+				downloadAnchorNode.remove();
+			}
+
 			function att(x, a) { return x.getAttribute(a) }
 		});
 
@@ -275,6 +286,39 @@
 				e.style.display = "block";
 			else
 				e.style.display = "none";
+		}
+
+		function createViewsInternal(nv) {
+			HTTP.post(`${SB}/meta/views`, nv).then(
+				function (resp) {
+					if (!resp.data.success) {
+						alert("view cannot be created : " + resp.data.error);
+					}
+				}
+			);
+		}
+
+		function importViews(event, pg, p) {
+			if (typeof window.FileReader !== 'function')
+				throw ("The file API isn't supported on this browser.");
+			let input = event.target;
+			if (!input)
+				throw ("The browser does not properly implement the event object");
+			if (!input.files)
+				throw ("This browser does not support the `files` property of the file input.");
+			if (!input.files[0])
+				return undefined;
+			let file = input.files[0];
+			let fr = new FileReader();
+			fr.readAsText(file);
+			fr.onload = function (evt) {
+				viewsObj = JSON.parse(evt.target.result);
+				viewsObj["pId"] = { processGrp: pg, process: p };
+				createViewsInternal(viewsObj);
+			}
+			fr.onerror = function (evt) {
+				alert("Couldn't read the file : " + evt);
+			}
 		}
 
 	</script>
@@ -301,6 +345,13 @@
 					<button class="create-view-btn" ng-click="proc.showCreateView = !proc.showCreateView">
 						Create a view
 					</button>
+					<div>
+						<label for="{{pg + ':' + p + ':views'}}" class="filesbtn">Import view</label>
+						<input type="file" id="{{pg + ':' + p + ':views'}}" pg="{{pg}}" proc="{{p}}" value="Import views"
+							onchange='importViews(event, this.getAttribute("pg"), this.getAttribute("proc"))' 
+							style="visibility: hidden;"/>
+					</div>
+					<button ng-click="exportViews(proc.views)">Export views</button>
 				</div>
 				<div class="viewoverlay" ng-show="proc.showCreateView">
 					<div class="create-views-pane-parent">
@@ -354,11 +405,7 @@
 				</div>
 			</div>
 		</div>
-
-
-
 	</div>
-	<script defer="defer" src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
 </body>
 
 </html>
