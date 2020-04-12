@@ -17,6 +17,6 @@ public interface MetricsFilter<K, V> {
 	 * @param value
 	 * @return
 	 */
-	MetricRecord<K, V> doFilter(MetricRecord<K, V> mr);
+	MetricRecord doFilter(MetricRecord mr);
 	
 }

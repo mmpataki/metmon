@@ -2,9 +2,9 @@ package metmon.model.metric;
 
 import metmon.store.StoreCell;
 
-public class Metric<K, V> extends StoreCell<K, V> {
+public class Metric extends StoreCell<String, Double> {
 	
-	public Metric(K key, V value) {
+	public Metric(String key, Double value) {
 		super(key, value);
 	}
 	

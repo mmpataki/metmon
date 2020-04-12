@@ -63,14 +63,14 @@ public class RestClient {
 		exec(HttpMethod.PATCH, path, o, ptype);
 	}
 
-	public <K, V> void postMetric(MetricRecord<K, V> mr) throws RESTException {
+	public <K, V> void postMetric(MetricRecord mr) throws RESTException {
 		post(MetricsController.METRICS_PATH_CREATE, mr, 
 				new ParameterizedTypeReference<RESTResponse<NullObject>>() {});
 	}
 
-	public <K, V> List<MetricRecord<K, V>> getMetrics(MetricRequest<K> mr) throws RESTException {
+	public <K, V> List<MetricRecord> getMetrics(MetricRequest<K> mr) throws RESTException {
 		return post(MetricsController.METRICS_PATH, mr,
-				new ParameterizedTypeReference<RESTResponse<List<MetricRecord<K, V>>>>() {});
+				new ParameterizedTypeReference<RESTResponse<List<MetricRecord>>>() {});
 	}
 	
 	public <K, V> MetaRecord getMeta(String procGrp, String proc) throws RESTException {

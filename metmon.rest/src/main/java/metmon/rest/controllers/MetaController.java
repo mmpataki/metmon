@@ -16,7 +16,9 @@ import metmon.model.meta.MetaRecord;
 import metmon.model.meta.Views;
 import metmon.rest.controllers.util.NullObject;
 import metmon.rest.controllers.util.RESTResponse;
-import metmon.rest.services.MetaService;
+import metmon.rest.services.MetricMetaService;
+import metmon.rest.services.ProcessService;
+import metmon.rest.services.ViewsService;
 
 @RestController
 @CrossOrigin("*")
@@ -32,7 +34,13 @@ public class MetaController {
 	
 
 	@Autowired
-	MetaService MS;
+	MetricMetaService MS;
+	
+	@Autowired
+	ViewsService VS;
+	
+	@Autowired
+	ProcessService PS;
 
 	@RequestMapping(method = RequestMethod.GET, path = META_PATH + "/{procGroup}/{proc}")
 	public RESTResponse<MetaRecord> getAvailbleMetrics(@PathVariable String procGroup, @PathVariable String proc) {
@@ -41,26 +49,26 @@ public class MetaController {
 
 	@RequestMapping(method = RequestMethod.GET, path = VIEW_PATH + "/{procGroup}/{proc}")
 	public RESTResponse<List<Views>> getAvailableViews(@PathVariable String procGroup, @PathVariable String proc) {
-		return build(() -> MS.getAvailableViews(procGroup, proc));
+		return build(() -> VS.getAvailableViews(procGroup, proc));
 	}
 	
 	@RequestMapping(method = RequestMethod.POST, path = VIEW_PATH)
 	public RESTResponse<NullObject> createView(@RequestBody Views view) {
-		return build(() -> MS.createView(view));
+		return build(() -> VS.createView(view));
 	}
 	
 	@RequestMapping(method = RequestMethod.DELETE, path = VIEW_PATH + "/{procGroup}/{proc}/{viewName}")
 	public RESTResponse<NullObject> deleteView(@PathVariable String procGroup, @PathVariable String proc, @PathVariable String viewName) {
-		return build(() -> MS.deleteView(procGroup, proc, viewName));
+		return build(() -> VS.deleteView(procGroup, proc, viewName));
 	}
 	
 	@RequestMapping(method = RequestMethod.GET, path = PROC_GROUPS_PATH)
 	public RESTResponse<List<String>> getProcGroups() {
-		return build(() -> MS.getProcGroups());
+		return build(() -> PS.getProcGroups());
 	}
 	
 	@RequestMapping(method = RequestMethod.GET, path = PROCESSES_PATH + "/{procGroup}/processes")
 	public RESTResponse<List<String>> getProcesses(@PathVariable String procGroup) {
-		return build(() -> MS.getProcesses(procGroup));
+		return build(() -> PS.getProcesses(procGroup));
 	}
 }

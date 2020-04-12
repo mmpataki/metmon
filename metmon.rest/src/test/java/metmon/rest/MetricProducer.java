@@ -31,10 +31,10 @@ public class MetricProducer {
 		this.ctxt = ctxt;
 	}
 
-	public MetricRecord<String, Double> pop() {
-		MetricRecord<String, Double> mr = new MetricRecord<String, Double>(ts++, ctxt, mrid);
+	public MetricRecord pop() {
+		MetricRecord mr = new MetricRecord(ts++, ctxt, mrid);
 		for (int i = 0; i < nnCnt; i++) {
-			mr.addRecord(new Metric<>(keys[i], (double) R.nextInt(1)));
+			mr.addRecord(new Metric(keys[i], (double) R.nextInt(1)));
 		}
 		return mr;
 	}

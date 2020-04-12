@@ -38,7 +38,7 @@ import metmon.store.StoreRequest;
 /* 
  * Store using HBase as storage backend.
  */
-public class HBaseStore<K, V> extends BaseStore<K, V> {
+public class HBaseStore<K, V, R extends StoreRecord<K, V, C>, C extends StoreCell<K, V>> extends BaseStore<K, V, R, C> {
 
 	public HBaseStore(MetmonConfiguration conf) {
 		super(conf);
@@ -108,15 +108,15 @@ public class HBaseStore<K, V> extends BaseStore<K, V> {
 	}
 
 	@Override
-	public <R extends StoreRecord<K, V, C>, C extends StoreCell<K, V>> List<R> get(StoreRequest<K> req,
-			FromStoreRecord<K, V, R, C> rbldr, FromStoreCell<K, V, C> cbldr) throws Exception {
+	public List<R> get(StoreRequest<K> req, FromStoreRecord<K, V, R, C> rbldr, FromStoreCell<K, V, C> cbldr)
+			throws Exception {
 		Scan s = new Scan();
 		s.setStartRow(Bytes.toBytes(req.getFrom()));
 		s.setStopRow(Bytes.toBytes(req.getTo()));
 		s.setMaxVersions(1);
-		
+
 		s.addFamily(cf);
-		
+
 		int i = 0;
 		byte[][] keys = new byte[req.getKeys().size()][];
 		for (K key : req.getKeys()) {
@@ -131,9 +131,9 @@ public class HBaseStore<K, V> extends BaseStore<K, V> {
 		while (it.hasNext()) {
 			Result res = it.next();
 			R rec = rbldr.apply(Bytes.toLong(res.getRow()));
-			
+
 			CellScanner cs = res.cellScanner();
-			
+
 			while (cs.advance()) {
 				Cell c = cs.current();
 				K key = kSerde.deserialize(CellUtil.cloneQualifier(c));
@@ -142,15 +142,14 @@ public class HBaseStore<K, V> extends BaseStore<K, V> {
 				C cell = cbldr.apply(key, vSerde.deserialize(CellUtil.cloneValue(c)));
 				rec.addRecord(cell);
 			}
-			
+
 			list.add(rec);
 		}
 		return list;
 	}
 
 	@Override
-	public <R extends StoreRecord<K, V, C>, C extends StoreCell<K, V>> void put(R rec, ToStoreRecord<K, V, R, C> rbldr,
-			ToStoreCell<K, V, C> cbldr) throws Exception {
+	public void put(R rec, ToStoreRecord<K, V, R, C> rbldr, ToStoreCell<K, V, C> cbldr) throws Exception {
 		StoreRecord<K, V, C> r = rbldr.apply(rec);
 		Put p = new Put(Bytes.toBytes(r.getTs()));
 		for (C c : r.getRecords()) {

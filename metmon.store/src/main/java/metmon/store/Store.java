@@ -12,7 +12,7 @@ import java.util.List;
  * @param <K> : Key type
  * @param <V> : Value type
  */
-public interface Store<K, V> {
+public interface Store<K, V, R extends StoreRecord<K, V, C>, C extends StoreCell<K, V>> {
 
 	/**
 	 * Initialize/Open the store, create it if specified.
@@ -33,7 +33,7 @@ public interface Store<K, V> {
 	 * @return : list of user level record.
 	 * @throws Exception
 	 */
-	<R extends StoreRecord<K, V, C>, C extends StoreCell<K, V>> List<R> get(StoreRequest<K> req,
+	List<R> get(StoreRequest<K> req,
 			FromStoreRecord<K, V, R, C> rbldr, FromStoreCell<K, V, C> cbldr) throws Exception;
 
 	/**
@@ -45,7 +45,7 @@ public interface Store<K, V> {
 	 * @param cbldr : function to convert from user cell to store cell
 	 * @throws Exception
 	 */
-	<R extends StoreRecord<K, V, C>, C extends StoreCell<K, V>> void put(R rec, 
+	void put(R rec, 
 			ToStoreRecord<K, V, R, C> rbldr, ToStoreCell<K, V, C> cbldr) throws Exception;
 
 	/**

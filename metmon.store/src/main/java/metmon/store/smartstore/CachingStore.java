@@ -1,5 +1,6 @@
 package metmon.store.smartstore;
 
+import java.util.Arrays;
 import java.util.List;
 
 import metmon.store.DeleteRequest;
@@ -36,7 +37,7 @@ public class CachingStore<K, V, R extends StoreRecord<K, V, C>, C extends StoreC
 			rec = delegate.get(req, rbldr, cbldr).get(0);
 			C.put(req.getFrom(), rec);
 		}
-		return rec;
+		return Arrays.asList(rec);
 	}
 
 	@Override

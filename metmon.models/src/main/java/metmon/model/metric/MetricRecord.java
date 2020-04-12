@@ -2,7 +2,7 @@ package metmon.model.metric;
 
 import metmon.store.StoreRecord;
 
-public class MetricRecord<K, V> extends StoreRecord<K, V, Metric<K, V>> {
+public class MetricRecord extends StoreRecord<String, Double, Metric> {
 
 	String ctxt;
 	ProcIdentifier id;
@@ -37,10 +37,9 @@ public class MetricRecord<K, V> extends StoreRecord<K, V, Metric<K, V>> {
 		this.ctxt = ctxt;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public boolean equals(Object obj) {
-		MetricRecord<K, V> o = (MetricRecord<K, V>) obj;
+		MetricRecord o = (MetricRecord) obj;
 		if (this == o)
 			return true;
 		return true;

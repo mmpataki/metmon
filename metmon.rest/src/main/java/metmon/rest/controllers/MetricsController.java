@@ -28,12 +28,12 @@ public class MetricsController {
 	public static final String METRICS_PATH = "/metmon/metrics";
 	
 	@RequestMapping(method = RequestMethod.POST, value = METRICS_PATH_CREATE)
-	RESTResponse<NullObject> publish(@RequestBody MetricRecord<String, Double> update) throws Exception {
+	RESTResponse<NullObject> publish(@RequestBody MetricRecord update) throws Exception {
 		return build(() -> MC.consume(update));
 	}
 	
 	@RequestMapping(method = RequestMethod.POST, value = METRICS_PATH)
-	RESTResponse<List<MetricRecord<String,Double>>> get(@RequestBody MetricRequest<String> req) {
+	RESTResponse<List<MetricRecord>> get(@RequestBody MetricRequest<String> req) {
 		return build(() -> MC.fetch(req));
 	}
 	

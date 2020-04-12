@@ -39,9 +39,9 @@ public class MetmonSink implements MetricsSink {
 	public void putMetrics(org.apache.hadoop.metrics2.MetricsRecord r) {
 		LOG.warn("posting metrics + " + r);
 		ProcIdentifier mrid = new ProcIdentifier(procGrp, find(r.tags(), "Hostname") + "-" + proc);
-		MetricRecord<String, Double> mr = new MetricRecord<>(r.timestamp(), r.name(), mrid);
+		MetricRecord mr = new MetricRecord(r.timestamp(), r.name(), mrid);
 		for (AbstractMetric	m : r.metrics()) {
-			mr.addRecord(new Metric<String, Double>(m.name(), m.value().doubleValue()));
+			mr.addRecord(new Metric(m.name(), m.value().doubleValue()));
 		}
 		try {
 			LOG.warn("before post MDEBUG");

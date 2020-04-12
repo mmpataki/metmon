@@ -21,10 +21,10 @@ public class HadoopMetricFilter implements MetricsFilter<String, Double> {
 	 *  3. Replaces keys with (beanName || keys)
 	 */
 	@Override
-	public MetricRecord<String, Double> doFilter(MetricRecord<String, Double> mr) {
-		Iterator<Metric<String, Double>> mit = mr.getRecords().iterator();
+	public MetricRecord doFilter(MetricRecord mr) {
+		Iterator<Metric> mit = mr.getRecords().iterator();
 		while(mit.hasNext()) {
-			Metric<String, Double> m = mit.next();
+			Metric m = mit.next();
 			if(keysToIgnore.contains(m.getKey()))
 				mit.remove();
 		}

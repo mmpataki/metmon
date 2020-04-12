@@ -24,38 +24,39 @@ public class MetricsService {
 	MetmonConfiguration conf;
 
 	@Autowired
-	MetaService MS;
+	MetricMetaService MS;
 
-	Stores<String, Double> stores;
+	Stores<String, Double, MetricRecord, Metric> stores;
 
 	List<MetricsFilter<String, Double>> filters;
 
 	@PostConstruct
 	public void init() throws Exception {
-		stores = new Stores<String, Double>(conf, new SerDes.StringSerde(), new SerDes.DoubleSerde());
+		stores = new Stores<String, Double, MetricRecord, Metric>(conf, new SerDes.StringSerde(),
+				new SerDes.DoubleSerde());
 		setupFilters(conf);
 	}
 
-	public void consume(MetricRecord<String, Double> rec) throws Exception {
+	public void consume(MetricRecord rec) throws Exception {
 
 		MS.sink(rec);
 
-		Store<String, Double> store = stores.open(rec.getId(), true);
+		Store<String, Double, MetricRecord, Metric> store = stores.open(rec.getId(), true);
 
 		for (MetricsFilter<String, Double> mf : filters) {
 			rec = mf.doFilter(rec);
 		}
 
-		final MetricRecord<String, Double> u = rec;
+		final MetricRecord u = rec;
 		store.put(u, r -> r, c -> new StoreCell<String, Double>(u.getCtxt() + '\0' + c.getKey(), c.getValue()));
 	}
 
-	public List<MetricRecord<String, Double>> fetch(MetricRequest<String> req) throws Exception {
+	public List<MetricRecord> fetch(MetricRequest<String> req) throws Exception {
 		req.setKeys(req.getKeys().stream().map(s -> s.replace(':', '\0')).collect(Collectors.toSet()));
-		Store<String, Double> store = stores.open(req.getId(), false);
+		Store<String, Double, MetricRecord, Metric> store = stores.open(req.getId(), false);
 
-		FromStoreRecord<String, Double, MetricRecord<String, Double>, Metric<String, Double>> f = (r) -> new MetricRecord<String, Double>(r, "don't use", req.getId());
-		return store.get(req, f, (k, v) -> new Metric<>(k.replace('\0', ':'), v));
+		FromStoreRecord<String, Double, MetricRecord, Metric> f = (r) -> new MetricRecord(r, "don't use", req.getId());
+		return store.get(req, f, (k, v) -> new Metric(k.replace('\0', ':'), v));
 	}
 
 	@SuppressWarnings("unchecked")

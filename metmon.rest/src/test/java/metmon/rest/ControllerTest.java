@@ -24,7 +24,7 @@ public class ControllerTest extends TestBase {
 
 	RestClient C;
 	ProcIdentifier mrid;
-	List<MetricRecord<String, Double>> recs;
+	List<MetricRecord> recs;
 	String ctxt = "testCtxt";
 	String[] keys = { "numRequests", "maxRequestTime", "activeThreads", "memoryMB", "numExceptions" };
 
@@ -42,7 +42,7 @@ public class ControllerTest extends TestBase {
 
 	@Test
 	public void basicMetricsIngestion() throws RESTException {
-		for (MetricRecord<String, Double> mr : recs) {
+		for (MetricRecord mr : recs) {
 			C.postMetric(mr);
 		}
 	}
@@ -50,13 +50,13 @@ public class ControllerTest extends TestBase {
 	@Test
 	@DependsOn("basicMetricsIngestion")
 	public void ingestValidation() throws RESTException {
-		List<MetricRecord<String, Double>> metrics = C
+		List<MetricRecord> metrics = C
 				.getMetrics(new MetricRequest<String>(recs.get(0).getTs(), recs.get(recs.size() - 1).getTs() + 1, mrid,
 						Arrays.asList(keys).stream().map(k -> ctxt + ":" + k).collect(Collectors.toSet())));
 
-		for (MetricRecord<String, Double> mr1 : recs) {
+		for (MetricRecord mr1 : recs) {
 			boolean exists = false;
-			for (MetricRecord<String, Double> mr2 : metrics) {
+			for (MetricRecord mr2 : metrics) {
 				if (mr2.equals(mr1)) {
 					exists = true;
 					break;

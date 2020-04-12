@@ -21,7 +21,7 @@ public class RestClient {
 		baseUrl = baseURL;
 	}
 
-	public void postMetric(MetricRecord<String, Double> mr) throws Exception {
+	public void postMetric(MetricRecord mr) throws Exception {
 		ClientConfig clientConfig = new DefaultClientConfig();
 		clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
 		Client client = Client.create(clientConfig);
@@ -30,8 +30,8 @@ public class RestClient {
 	}
 	
 	public static void main(String[] args) throws Exception {
-		MetricRecord<String, Double> mr = new MetricRecord<String, Double>(5, "hello", new ProcIdentifier("pg", "p"));
-		mr.addRecord(new Metric<String, Double>("k1", 9.0));
+		MetricRecord mr = new MetricRecord(5, "hello", new ProcIdentifier("pg", "p"));
+		mr.addRecord(new Metric("k1", 9.0));
 		new RestClient("http://localhost:8080").postMetric(mr);
 	}
 
