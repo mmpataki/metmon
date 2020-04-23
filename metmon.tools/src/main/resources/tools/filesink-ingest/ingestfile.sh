@@ -1,0 +1,1 @@
+java -jar metmon.tools-0.0.1-SNAPSHOT.jar $*
