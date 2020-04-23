@@ -27,7 +27,7 @@ public class ViewsService {
 
 	@PostConstruct
 	private void init() throws Exception {
-		stores = new Stores<>(conf, new SerDes.StringSerde(), new SerDes.StringSerde());
+		stores = new Stores<>("viewstore", conf, new SerDes.StringSerde(), new SerDes.StringSerde());
 	}
 
 	/* views */

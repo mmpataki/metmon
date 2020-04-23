@@ -20,55 +20,50 @@ import metmon.store.StoreCell;
 @Service
 public class MetricsService {
 
-	@Autowired
-	MetmonConfiguration conf;
+    @Autowired
+    MetmonConfiguration conf;
 
-	@Autowired
-	MetricMetaService MS;
+    @Autowired
+    MetricMetaService MS;
 
-	Stores<String, Double, MetricRecord, Metric> stores;
+    Stores<Short, Double, MetricRecord, Metric> stores;
 
-	List<MetricsFilter<String, Double>> filters;
+    List<MetricsFilter<String, Double>> filters;
 
-	@PostConstruct
-	public void init() throws Exception {
-		stores = new Stores<String, Double, MetricRecord, Metric>(conf, new SerDes.StringSerde(),
-				new SerDes.DoubleSerde());
-		setupFilters(conf);
-	}
+    @PostConstruct
+    public void init() throws Exception {
+        stores = new Stores<Short, Double, MetricRecord, Metric>("metricstore", conf, new SerDes.ShortSerde(),
+                new SerDes.DoubleSerde());
+        setupFilters(conf);
+    }
 
-	public void consume(MetricRecord rec) throws Exception {
+    public void consume(MetricRecord rec) throws Exception {
+        Store<Short, Double, MetricRecord, Metric> store = stores.open(rec.getId(), true);
 
-		MS.sink(rec);
+        for (MetricsFilter<String, Double> mf : filters) {
+            rec = mf.doFilter(rec);
+        }
 
-		Store<String, Double, MetricRecord, Metric> store = stores.open(rec.getId(), true);
+        final MetricRecord u = rec;
+        store.put(u, r -> r, c -> new StoreCell<Short, Double>(c.getKey(), c.getValue()));
+    }
 
-		for (MetricsFilter<String, Double> mf : filters) {
-			rec = mf.doFilter(rec);
-		}
+    public List<MetricRecord> fetch(MetricRequest<Short> req) throws Exception {
+        Store<Short, Double, MetricRecord, Metric> store = stores.open(req.getId(), false);
+        FromStoreRecord<Short, Double, MetricRecord, Metric> f = (r) -> new MetricRecord(r, req.getId());
+        return store.get(req, f, Metric::new);
+    }
 
-		final MetricRecord u = rec;
-		store.put(u, r -> r, c -> new StoreCell<String, Double>(u.getCtxt() + '\0' + c.getKey(), c.getValue()));
-	}
-
-	public List<MetricRecord> fetch(MetricRequest<String> req) throws Exception {
-		req.setKeys(req.getKeys().stream().map(s -> s.replace(':', '\0')).collect(Collectors.toSet()));
-		Store<String, Double, MetricRecord, Metric> store = stores.open(req.getId(), false);
-
-		FromStoreRecord<String, Double, MetricRecord, Metric> f = (r) -> new MetricRecord(r, "don't use", req.getId());
-		return store.get(req, f, (k, v) -> new Metric(k.replace('\0', ':'), v));
-	}
-
-	@SuppressWarnings("unchecked")
-	private void setupFilters(MetmonConfiguration conf) throws Exception {
-		filters = new LinkedList<>();
-		String filterClasses[] = conf
-				.get(MetmonConfiguration.FILTER_CLASS_LIST, MetmonConfiguration.FILTER_CLASS_LIST_DEFAULT).split(",");
-		if (filterClasses[0].isEmpty())
-			return;
-		for (String clazz : filterClasses) {
-			filters.add((MetricsFilter<String, Double>) Class.forName(clazz).getConstructor(MetmonConfiguration.class)
-					.newInstance(conf));
-		}
-	}
+    @SuppressWarnings("unchecked")
+    private void setupFilters(MetmonConfiguration conf) throws Exception {
+        filters = new LinkedList<>();
+        String filterClasses[] = conf
+                .get(MetmonConfiguration.FILTER_CLASS_LIST, MetmonConfiguration.FILTER_CLASS_LIST_DEFAULT).split(",");
+        if (filterClasses[0].isEmpty())
+            return;
+        for (String clazz : filterClasses) {
+            filters.add((MetricsFilter<String, Double>) Class.forName(clazz).getConstructor(MetmonConfiguration.class)
+                    .newInstance(conf));
+        }
+    }
 }

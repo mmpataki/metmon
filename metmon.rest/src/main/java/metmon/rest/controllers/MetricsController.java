@@ -33,7 +33,7 @@ public class MetricsController {
 	}
 	
 	@RequestMapping(method = RequestMethod.POST, value = METRICS_PATH)
-	RESTResponse<List<MetricRecord>> get(@RequestBody MetricRequest<String> req) {
+	RESTResponse<List<MetricRecord>> get(@RequestBody MetricRequest<Short> req) {
 		return build(() -> MC.fetch(req));
 	}
 	

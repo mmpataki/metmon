@@ -2,9 +2,8 @@ package metmon.model.metric;
 
 import metmon.store.StoreRecord;
 
-public class MetricRecord extends StoreRecord<String, Double, Metric> {
+public class MetricRecord extends StoreRecord<Short, Double, Metric> {
 
-	String ctxt;
 	ProcIdentifier id;
 
 	public MetricRecord() {
@@ -12,13 +11,12 @@ public class MetricRecord extends StoreRecord<String, Double, Metric> {
 	}
 
 	public MetricRecord(long ts) {
-		this(ts, "", null);
+		this(ts, null);
 	}
 
-	public MetricRecord(long ts, String ctxt, ProcIdentifier id) {
+	public MetricRecord(long ts, ProcIdentifier id) {
 		super(ts);
 		this.id = id;
-		this.ctxt = ctxt;
 	}
 
 	public ProcIdentifier getId() {
@@ -27,14 +25,6 @@ public class MetricRecord extends StoreRecord<String, Double, Metric> {
 
 	public void setId(ProcIdentifier id) {
 		this.id = id;
-	}
-
-	public String getCtxt() {
-		return ctxt;
-	}
-
-	public void setCtxt(String ctxt) {
-		this.ctxt = ctxt;
 	}
 
 	@Override
@@ -47,7 +37,7 @@ public class MetricRecord extends StoreRecord<String, Double, Metric> {
 
 	@Override
 	public String toString() {
-		return String.format("{ts=%d, id=%s, ctxt=%s, records=%s}", getTs(), getId(), getCtxt(), getRecords());
+		return String.format("{ts=%d, id=%s, records=%s}", getTs(), getId(), getRecords());
 	}
 
 }

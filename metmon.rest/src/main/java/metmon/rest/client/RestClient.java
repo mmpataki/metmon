@@ -2,7 +2,9 @@ package metmon.rest.client;
 
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 
+import metmon.model.meta.KeyRegisterRequest;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -100,5 +102,9 @@ public class RestClient {
 		return get(MetaController.PROCESSES_PATH + "/" + procGroup + "/processes",
 				new ParameterizedTypeReference<RESTResponse<List<String>>>() {});
 	}
-	
+
+	public Map<String, Short> registerKeys(KeyRegisterRequest req) throws RESTException {
+		return post(MetaController.KEYS_PATH, req,
+				new ParameterizedTypeReference<RESTResponse<Map<String, Short>>>() {});
+	}
 }

@@ -18,7 +18,6 @@ public class MetricProducer {
 	/**
 	 * Initialize the keys of the metrics produced.
 	 * 
-	 * @param metaMetrics : number of meta metric keys
 	 * @param numMetrics  : number of numeric metric keys
 	 * @param metricKeys  : keys (meta keys followed by numeric keys)
 	 */
@@ -32,9 +31,9 @@ public class MetricProducer {
 	}
 
 	public MetricRecord pop() {
-		MetricRecord mr = new MetricRecord(ts++, ctxt, mrid);
+		MetricRecord mr = new MetricRecord(ts++, mrid);
 		for (int i = 0; i < nnCnt; i++) {
-			mr.addRecord(new Metric(keys[i], (double) R.nextInt(1)));
+			mr.addRecord(new Metric((short)i, (double) R.nextInt(1)));
 		}
 		return mr;
 	}

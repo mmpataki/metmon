@@ -32,4 +32,18 @@ public class SerDes {
 		}
 
 	}
+
+	public static class ShortSerde implements SerDe<Short> {
+
+		@Override
+		public Short deserialize(byte[] buf) {
+			return Bytes.toShort(buf);
+		}
+
+		@Override
+		public byte[] serialize(Short obj) {
+			return Bytes.toBytes(obj);
+		}
+
+	}
 }

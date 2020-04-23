@@ -21,15 +21,43 @@
               <goal>shade</goal>
             </goals>
             <configuration>
-              <transformers>
-                <transformer>
-                  <mainClass>foo.bar.goo</mainClass>
-                </transformer>
-              </transformers>
+              <artifactSet>
+                <excludes>
+                  <exclude>org.*:*</exclude>
+                  <exclude>io.netty:*</exclude>
+                  <exclude>com.google:*</exclude>
+                  <exclude>commons-*:*</exclude>
+                </excludes>
+                <includes>
+                  <include>com.mmp:metmon.core</include>
+                  <include>com.mmp:metmon.store</include>
+                  <include>com.mmp:metmon.models</include>
+                </includes>
+              </artifactSet>
             </configuration>
           </execution>
         </executions>
       </plugin>
     </plugins>
   </build>
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-common</artifactId>
+      <version>2.7.3</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.code.gson</groupId>
+      <artifactId>gson</artifactId>
+      <version>2.3.1</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.13</version>
+      <scope>compile</scope>
+    </dependency>
+  </dependencies>
 </project>

@@ -127,9 +127,7 @@ public class HBaseStore<K, V, R extends StoreRecord<K, V, C>, C extends StoreCel
 
 		List<R> list = new LinkedList<>();
 
-		Iterator<Result> it = table.getScanner(s).iterator();
-		while (it.hasNext()) {
-			Result res = it.next();
+		for (Result res : table.getScanner(s)) {
 			R rec = rbldr.apply(Bytes.toLong(res.getRow()));
 
 			CellScanner cs = res.cellScanner();

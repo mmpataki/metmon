@@ -99,9 +99,29 @@
 							return;
 						resp.data.item.forEach(p => {
 							$scope.app.pgs[pg][p] = { views: {}, newView: emptyView(pg, p), showCreateView: false };
-							fetchViews(pg, p);
 							fetchKeys(pg, p);
 						});
+					}
+				)
+			}
+			function fetchKeys(pg, p) {
+				$http.get(`${SB}/meta/metrics/${pg}/${p}`).then(
+					function (resp) {
+						if (!resp.data.success)
+							return;
+						var ctxts = {};
+						var numToKeyName = {};
+						Object.entries(resp.data.item.keys).forEach(function(arr) {
+							var ctxt = arr[0].split(":")[0];
+							var key = arr[0].split(":")[1];
+							if(ctxts[ctxt] == undefined)
+								ctxts[ctxt] = {};
+							ctxts[ctxt][key] = arr[1];
+							numToKeyName[arr[1]] = arr[0];
+						});
+						$scope.app.pgs[pg][p].keys = ctxts;
+						$scope.app.pgs[pg][p].numToKeyName = numToKeyName;
+						fetchViews(pg, p);
 					}
 				)
 			}
@@ -118,23 +138,21 @@
 							tmp[v.name] = {};
 							tmp[v.name]["meta"] = v;
 							v.vData.extra.span = +v.vData.extra.span;
-							fetchMetrics(v);
+							fetchMetrics(pg, p, v);
 						});
 						$scope.app.pgs[pg][p].views = tmp;
 					}
 				);
 			}
-			function fetchKeys(pg, p) {
-				$http.get(`${SB}/meta/metrics/${pg}/${p}`).then(
-					function (resp) {
-						if (!resp.data.success)
-							return;
-						$scope.app.pgs[pg][p].keys = resp.data.item;
-					}
-				)
-			}
-			function fetchMetrics(v) {
+			function fetchMetrics(pg, p, v) {
 				var ctime = Date.now();
+				var shortKeys = [];
+				p = $scope.app.pgs[pg][p];
+				v.vData.keys.forEach(k => {
+					var ctxt = k.split(":")[0];
+					var key = k.split(":")[1];
+					shortKeys.push(p.keys[ctxt][key]);
+				});
 				var req = {
 					from: ctime - v.vData.extra.span,
 					to: ctime,
@@ -142,7 +160,7 @@
 						process: v.pId.process,
 						processGrp: v.pId.processGrp
 					},
-					keys: v.vData.keys
+					keys: shortKeys
 				};
 				$http.post(`${SB}/metrics`, req).then(
 					function (resp) {
@@ -175,7 +193,8 @@
 						tr.push('Time');
 						prevRow.push(0);
 						de.records.forEach(e => {
-							tr.push(e.key)
+							var sKey = $scope.app.pgs[pg][p].numToKeyName[e.key];
+							tr.push(sKey)
 							prevRow.push(0);
 						});
 						tab.push(tr);
@@ -373,15 +392,15 @@
 							</div>
 							<div class="contexts-pane">
 								<h4>Available metrics</h4>
-								<div ng-repeat="(ctxt, keys) in proc.keys.contexts" class="metric-context">
+								<div ng-repeat="(ctxt, keys) in proc.keys" class="metric-context">
 									{{ctxt}}
 									<span class="ctxt-expand-btn" onclick="flip(this.nextElementSibling)">+</span>
 									<fieldset class="context-keys-pane">
-										<div ng-repeat="key in keys" class="metric-key">
-											<input type="checkbox" value="{{ctxt + ':' + key}}"
-												id="{{ctxt + ':' + key}}"
-												ng-model="proc.newView.keys[ctxt + ':' + key]" />
-											<label for="{{ctxt + ':' + key}}" class="metric-key">{{key}}</label>
+										<div ng-repeat="(keyTxt, keyNum) in keys" class="metric-key">
+											<input type="checkbox" value="{{keyNum}}"
+												id="{{p + '-' + keyNum}}"
+												ng-model="proc.newView.keys[ctxt + ':' + keyTxt]" />
+											<label for="{{p + '-' + keyNum}}" class="metric-key">{{keyTxt}}</label>
 										</div>
 									</fieldset>
 								</div>

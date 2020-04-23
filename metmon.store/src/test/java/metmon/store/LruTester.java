@@ -1,11 +1,8 @@
 package metmon.store;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-
-import org.junit.jupiter.api.Test;
-
-import metmon.store.smartstore.LruCache;
+import metmon.store.kvcache.LruCache;
+import static org.junit.Assert.*;
+import org.junit.Test;
 
 /* need access to inner fields */
 public class LruTester extends LruCache<Integer, String> {
@@ -31,9 +28,9 @@ public class LruTester extends LruCache<Integer, String> {
 			put(i, "hello");
 		}
 		get(0);
-		assertEquals(0, head.getKey());
+		assertEquals(0l, (long)head.getKey());
 		get(1);
-		assertEquals(1, head.getKey());
+		assertEquals(1l, (long)head.getKey());
 	}
 
 	@Test
@@ -43,7 +40,7 @@ public class LruTester extends LruCache<Integer, String> {
 			put(x + i, "hello");
 		}
 		assertNotEquals(null, get(x+1));
-		assertEquals(null, get(x));
+		assertNull(get(x));
 	}
 	
 	@Test
@@ -53,10 +50,10 @@ public class LruTester extends LruCache<Integer, String> {
 			put(x + i, "hello");
 		}
 		put(-1, "hello");
-		assertEquals(1 + x, tail.getKey());
+		assertEquals(1l + x, (long)tail.getKey());
 		get(1+x);
-		assertEquals(1+x, head.getKey());
-		assertEquals(-1, head.getNext().getKey());
+		assertEquals(1l + x, (long)head.getKey());
+		assertEquals(-1l, (long)head.getNext().getKey());
 	}
 	
 }

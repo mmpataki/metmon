@@ -47,11 +47,19 @@
 							<goal>shade</goal>
 						</goals>
 						<configuration>
-							<transformers>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-									<mainClass>foo.bar.goo</mainClass>
-								</transformer>
-							</transformers>
+							<artifactSet>
+								<excludes>
+									<exclude>org.*:*</exclude>
+									<exclude>io.netty:*</exclude>
+									<exclude>com.google:*</exclude>
+									<exclude>commons-*:*</exclude>
+								</excludes>
+								<includes>
+									<include>com.mmp:metmon.core</include>
+									<include>com.mmp:metmon.store</include>
+									<include>com.mmp:metmon.models</include>
+								</includes>
+							</artifactSet>
 						</configuration>
 					</execution>
 				</executions>

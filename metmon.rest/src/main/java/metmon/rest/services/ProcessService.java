@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 
+import metmon.store.StoreCell;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -30,30 +31,30 @@ public class ProcessService {
 
 	@PostConstruct
 	private void init() throws Exception {
-		stores = new Stores<>(conf, new SerDes.StringSerde(), new SerDes.StringSerde());
+		stores = new Stores<>("processtore", conf, new SerDes.StringSerde(), new SerDes.StringSerde());
 		AS = stores.open(new ProcIdentifier("appConfig", "cf1"), true);
 	}
 
-	public void addProcess(String procGroup, String proc) throws Exception {
+	public void addProcess(ProcIdentifier pId) throws Exception {
 
 		/* add a process-group entry */
 		KeyValueRecord pgrpe = new KeyValueRecord(MetaConsts.META_PROC_GRPS_TS);
-		pgrpe.addRecord(new KeyValuePair(procGroup, ""));
+		pgrpe.addRecord(new KeyValuePair(pId.getProcessGrp(), ""));
 		AS.put(pgrpe, r -> r, c -> c);
 
 		/* add all process entry */
 		KeyValueRecord pe = new KeyValueRecord(MetaConsts.META_PROC_TS);
-		pe.addRecord(new KeyValuePair(procGroup + '\0' + proc, ""));
+		pe.addRecord(new KeyValuePair(pId.getProcessGrp() + '\0' + pId.getProcess(), ""));
 		AS.put(pe, r -> r, c -> c);
 
 	}
 
 	public List<String> getProcGroups() throws Exception {
-		FromStoreRecord<String, String, KeyValueRecord, KeyValuePair> f = (ts) -> new KeyValueRecord(ts);
+		FromStoreRecord<String, String, KeyValueRecord, KeyValuePair> f = KeyValueRecord::new;
 		return AS
 				.get(new KeyValueRequest(MetaConsts.META_PROC_GRPS_TS, MetaConsts.META_PROC_GRPS_END,
-						Collections.emptySet()), f, (k, v) -> new KeyValuePair(k, v))
-				.get(0).getRecords().stream().map(kv -> kv.getKey()).collect(Collectors.toList());
+						Collections.emptySet()), f, KeyValuePair::new)
+				.get(0).getRecords().stream().map(StoreCell::getKey).collect(Collectors.toList());
 	}
 
 	public List<String> getProcesses(String procGroup) throws Exception {

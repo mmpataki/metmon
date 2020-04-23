@@ -1,4 +1,4 @@
-package metmon.store.smartstore;
+package metmon.store.kvcache;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,11 +23,11 @@ public class LruCache<K, V> {
 		public String toString() {
 			return "[" + k + "] => " + next;
 		}
-		
+
 		public K getKey() {
 			return k;
 		}
-		
+
 		public V getValue() {
 			return v;
 		}
@@ -40,7 +40,6 @@ public class LruCache<K, V> {
 			return next;
 		}
 	}
-	
 
 	int maxSize;
 	protected Entry head, tail;
@@ -98,8 +97,23 @@ public class LruCache<K, V> {
 			cnt.decrementAndGet();
 		}
 	}
-	
+
+	public synchronized void delete(K k) {
+		Entry removed = map.remove(k);
+		removed.v = null;
+		removed.k = null;
+		if (removed.prev != null)
+			removed.prev.next = removed.next;
+		if (removed.next != null)
+			removed.next.prev = removed.prev;
+	}
+
 	public int size() {
 		return cnt.get();
+	}
+
+	public void clear() {
+		head = tail = null;
+		map.clear();
 	}
 }

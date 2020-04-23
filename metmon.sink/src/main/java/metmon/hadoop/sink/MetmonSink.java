@@ -1,7 +1,10 @@
 package metmon.hadoop.sink;
 
-import java.util.Collection;
+import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import metmon.model.meta.KeyRegisterRequest;
 import org.apache.commons.configuration.SubsetConfiguration;
 import org.apache.hadoop.metrics2.AbstractMetric;
 import org.apache.hadoop.metrics2.MetricsSink;
@@ -15,54 +18,96 @@ import metmon.model.metric.ProcIdentifier;
 
 public class MetmonSink implements MetricsSink {
 
-	Logger LOG = Logger.getLogger(MetmonSink.class);
-	RestClient C;
-	String procGrp;
-	String proc;
-	
-	String resolve(String val) {
-		if(val.startsWith("-D"))
-			return System.getProperty(val.substring(2));
-		else
-			return val;
-	}
-	
-	@Override
-	public void init(SubsetConfiguration conf) {
-		System.out.println(conf);
-		C = new RestClient(resolve(conf.getString("url")));
-		procGrp = resolve(conf.getString("procGrp"));
-		proc = resolve(conf.getString("procName"));
-	}
+    Logger LOG = Logger.getLogger(MetmonSink.class);
+    RestClient C;
+    String procGrp;
+    String proc;
+    ProcIdentifier mrid;
 
-	@Override
-	public void putMetrics(org.apache.hadoop.metrics2.MetricsRecord r) {
-		LOG.warn("posting metrics + " + r);
-		ProcIdentifier mrid = new ProcIdentifier(procGrp, find(r.tags(), "Hostname") + "-" + proc);
-		MetricRecord mr = new MetricRecord(r.timestamp(), r.name(), mrid);
-		for (AbstractMetric	m : r.metrics()) {
-			mr.addRecord(new Metric(m.name(), m.value().doubleValue()));
-		}
-		try {
-			LOG.warn("before post MDEBUG");
-			C.postMetric(mr);
-			LOG.warn("after post MDEBUG");
-		} catch (Throwable e) {
-			e.printStackTrace();
-		}
-	}
+    /* buffering data-structures */
+    int maxPublishBuffered;
+    int publisCalls = 0;
+    ConcurrentLinkedQueue<AbstractMetric> buffer;
 
-	private String find(Collection<MetricsTag> tags, String name) {
-		for (MetricsTag m : tags) {
-			if(m.name().equals(name))
-				return m.value();
-		}
-		return "<NULL>";
-	}
+    /**
+     * optimization for reducing nw i/o. for the first time, register the keys
+     * using the keys API and some short numbers for them, use them to report the
+     * metrics.
+     */
+    Map<String, Short> keyMap = new HashMap<>();
 
-	@Override
-	public void flush() {
-		
-	}
+    String resolve(String val) {
+        if (val.startsWith("-D"))
+            return System.getProperty(val.substring(2));
+        else
+            return val;
+    }
+
+    /* for hadoop */
+    public MetmonSink() {
+    }
+
+    /* for other users */
+    public MetmonSink(ProcIdentifier pId, String url) {
+        mrid = pId;
+        C = new RestClient(url);
+    }
+
+    @Override
+    public void init(SubsetConfiguration conf) {
+        System.out.println(conf);
+        C = new RestClient(resolve(conf.getString("url")));
+        mrid = new ProcIdentifier(resolve(conf.getString("procGrp")), resolve(conf.getString("procName")));
+        maxPublishBuffered = conf.getInt("bufferedPublishes", 5);
+    }
+
+    @Override
+    public void putMetrics(org.apache.hadoop.metrics2.MetricsRecord r) {
+        LOG.debug("posting metrics + " + r);
+        MetricRecord mr = new MetricRecord(r.timestamp(), mrid);
+
+        List<String> missingKeys = null;
+        List<AbstractMetric> unregisteredMetrics = null;
+
+        for (AbstractMetric m : r.metrics()) {
+            Short key = keyMap.get(r.name() + ":" + m.name());
+            if (key == null) {
+                if (missingKeys == null) {
+                    missingKeys = new LinkedList<>();
+                    unregisteredMetrics = new LinkedList<>();
+                }
+                missingKeys.add(r.name() + ":" + m.name());
+                unregisteredMetrics.add(m);
+            } else {
+                mr.addRecord(new Metric(key, m.value().doubleValue()));
+            }
+        }
+
+        /* if some keys are missing, get them from the server (null check is not heavy) */
+        if (missingKeys != null) {
+            try {
+                keyMap.putAll(C.getKeys(new KeyRegisterRequest(mrid, missingKeys)));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            for (int i = 0; i < unregisteredMetrics.size(); i++) {
+                mr.addRecord(new Metric(keyMap.get(missingKeys.get(i)), unregisteredMetrics.get(i).value().doubleValue()));
+            }
+        }
+
+        try {
+            LOG.warn("before post MDEBUG");
+            C.postMetric(mr);
+            LOG.warn("after post MDEBUG");
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void flush() {
+
+    }
 
 }
