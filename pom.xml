@@ -16,6 +16,7 @@
         <module>metmon.hbase.store</module>
         <module>metmon.sink</module>
         <module>metmon.tools</module>
+        <module>metmon.assembly</module>
     </modules>
 
     <properties>
@@ -28,6 +29,7 @@
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.13</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 </project>

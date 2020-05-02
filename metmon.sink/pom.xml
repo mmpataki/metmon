@@ -15,6 +15,7 @@
 			<groupId>com.mmp</groupId>
 			<artifactId>metmon.core</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
+			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.mmp</groupId>
@@ -26,12 +27,14 @@
 			<groupId>org.apache.hadoop</groupId>
 			<artifactId>hadoop-common</artifactId>
 			<version>2.7.3</version>
+			<scope>compile</scope>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/com.google.code.gson/gson -->
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
 			<version>2.3.1</version>
+			<scope>test</scope>
 		</dependency>
 	</dependencies>
 	<build>

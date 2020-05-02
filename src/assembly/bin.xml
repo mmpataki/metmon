@@ -1,0 +1,95 @@
+<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.1.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.1.0 http://maven.apache.org/xsd/assembly-2.1.0.xsd">
+    <id>bin</id>
+    <baseDirectory>/</baseDirectory>
+    <formats>
+        <format>dir</format>
+    </formats>
+    <includeBaseDirectory>false</includeBaseDirectory>
+    <moduleSets>
+
+        <!-- package the webapp + spring boot -->
+        <moduleSet>
+            <useAllReactorProjects>true</useAllReactorProjects>
+            <includes>
+                <include>com.mmp:metmon.rest</include>
+            </includes>
+            <binaries>
+                <includeDependencies>false</includeDependencies>
+                <outputDirectory>lib</outputDirectory>
+                <unpack>false</unpack>
+            </binaries>
+            <sources>
+                <includeModuleDirectory>false</includeModuleDirectory>
+                <outputDirectoryMapping>false</outputDirectoryMapping>
+                <fileSets>
+                    <fileSet>
+                        <directory>${project.basedir}/src/main/resources</directory>
+                        <outputDirectory>/</outputDirectory>
+                        <fileMode>0755</fileMode>
+                        <includes>
+                            <include>bin/*</include>
+                        </includes>
+                    </fileSet>
+                </fileSets>
+            </sources>
+        </moduleSet>
+
+        <!-- package the dependencies -->
+        <moduleSet>
+            <useAllReactorProjects>true</useAllReactorProjects>
+            <includes>
+                <include>com.mmp:metmon.core</include>
+                <include>com.mmp:metmon.hbase.store</include>
+                <include>com.mmp:metmon.models</include>
+                <include>com.mmp:metmon.store</include>
+            </includes>
+            <binaries>
+                <includeDependencies>false</includeDependencies>
+                <outputDirectory>lib</outputDirectory>
+                <unpack>false</unpack>
+            </binaries>
+        </moduleSet>
+
+        <!-- package the sink -->
+        <moduleSet>
+            <useAllReactorProjects>true</useAllReactorProjects>
+            <includes>
+                <include>com.mmp:metmon.sink</include>
+            </includes>
+            <binaries>
+                <includeDependencies>false</includeDependencies>
+                <outputDirectory>sink</outputDirectory>
+                <unpack>false</unpack>
+            </binaries>
+        </moduleSet>
+
+        <!-- package the tools -->
+        <moduleSet>
+            <useAllReactorProjects>true</useAllReactorProjects>
+            <includes>
+                <include>com.mmp:metmon.tools</include>
+            </includes>
+            <binaries>
+                <includeDependencies>false</includeDependencies>
+                <outputDirectory>tools/lib</outputDirectory>
+                <unpack>false</unpack>
+            </binaries>
+            <sources>
+                <includeModuleDirectory>false</includeModuleDirectory>
+                <outputDirectoryMapping>false</outputDirectoryMapping>
+                <fileSets>
+                    <fileSet>
+                        <directory>${project.basedir}/src/main/resources/tools/filesink-ingest</directory>
+                        <outputDirectory>tools/bin</outputDirectory>
+                        <fileMode>0755</fileMode>
+                        <includes>
+                            <include>ingestfile.sh</include>
+                        </includes>
+                    </fileSet>
+                </fileSets>
+            </sources>
+        </moduleSet>
+    </moduleSets>
+</assembly>
