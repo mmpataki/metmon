@@ -17,6 +17,7 @@
         <module>metmon.sink</module>
         <module>metmon.tools</module>
         <module>metmon.assembly</module>
+        <module>metmon.rest.client</module>
     </modules>
 
     <properties>
