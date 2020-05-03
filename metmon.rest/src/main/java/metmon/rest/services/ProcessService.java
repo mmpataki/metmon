@@ -58,11 +58,11 @@ public class ProcessService {
 	}
 
 	public List<String> getProcesses(String procGroup) throws Exception {
-		FromStoreRecord<String, String, KeyValueRecord, KeyValuePair> f = (ts) -> new KeyValueRecord(ts);
+		FromStoreRecord<String, String, KeyValueRecord, KeyValuePair> f = KeyValueRecord::new;
 		return AS
 				.get(new KeyValueRequest(MetaConsts.META_PROC_TS, MetaConsts.META_PROC_END, Collections.emptySet()), f,
-						(k, v) -> new KeyValuePair(k, v))
-				.get(0).getRecords().stream().map(kv -> kv.getKey())
+						KeyValuePair::new)
+				.get(0).getRecords().stream().map(StoreCell::getKey)
 				.filter(c -> c.substring(0, c.indexOf('\0')).equals(procGroup))
 				.map(d -> d.substring(d.indexOf('\0') + 1, d.length())).collect(Collectors.toList());
 	}

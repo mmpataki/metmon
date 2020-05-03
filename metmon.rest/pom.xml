@@ -56,11 +56,6 @@
             <artifactId>metmon.hbase.store</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
-        <dependency>
-            <groupId>com.mmp</groupId>
-            <artifactId>metmon.core</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-        </dependency>
     </dependencies>
     <build>
         <plugins>

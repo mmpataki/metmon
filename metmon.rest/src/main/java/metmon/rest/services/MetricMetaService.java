@@ -53,7 +53,7 @@ public class MetricMetaService {
 				try {
 					keys = getAvailableMetrics(pId.getProcessGrp(), pId.getProcess()).getKeys();
 				} catch (Exception e) {
-					LOG.error("failed to get the metric keys while registering keys", e);
+					LOG.debug("failed to get the metric keys while registering keys", e);
 					keys = new ConcurrentHashMap<>();
 				}
 			}
