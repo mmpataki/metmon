@@ -2,13 +2,12 @@ package metmon.hadoop.sink;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import metmon.model.meta.KeyRegisterRequest;
+import metmon.rest.client.RestClient;
 import org.apache.commons.configuration.SubsetConfiguration;
 import org.apache.hadoop.metrics2.AbstractMetric;
 import org.apache.hadoop.metrics2.MetricsSink;
-import org.apache.hadoop.metrics2.MetricsTag;
 import org.apache.log4j.Logger;
 
 import metmon.model.metric.Metric;
@@ -20,8 +19,6 @@ public class MetmonSink implements MetricsSink {
 
     Logger LOG = Logger.getLogger(MetmonSink.class);
     RestClient C;
-    String procGrp;
-    String proc;
     ProcIdentifier mrid;
 
     /* buffering data-structures */
@@ -39,6 +36,8 @@ public class MetmonSink implements MetricsSink {
     String resolve(String val) {
         if (val.startsWith("-D"))
             return System.getProperty(val.substring(2));
+        else if (val.startsWith("-E"))
+            return System.getenv(val.substring(2));
         else
             return val;
     }
@@ -97,9 +96,7 @@ public class MetmonSink implements MetricsSink {
         }
 
         try {
-            LOG.warn("before post MDEBUG");
             C.postMetric(mr);
-            LOG.warn("after post MDEBUG");
         } catch (Throwable e) {
             e.printStackTrace();
         }

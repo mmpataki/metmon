@@ -1,4 +1,4 @@
-package metmon.rest.controllers.util;
+package metmon.rest.client;
 
 /* wrapper around response */
 public class RESTResponse<ReturnObject> {
