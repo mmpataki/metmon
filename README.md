@@ -1,5 +1,4 @@
-# metmon
-
+# metmon [![Build Status](https://travis-ci.com/mmpataki/metmon.svg?branch=master)](https://travis-ci.com/mmpataki/metmon)  
 A simple metrics monitor with simplicity and efficiency in mind. 
 
 ### Features
