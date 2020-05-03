@@ -1,9 +1,6 @@
 package metmon.rest;
 
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import metmon.model.meta.KeyRegisterRequest;
@@ -17,9 +14,11 @@ import metmon.model.metric.ProcIdentifier;
 import metmon.rest.client.RESTException;
 import metmon.rest.client.RestClient;
 import org.junit.Before;
+import org.junit.FixMethodOrder;
 import org.junit.Test;
-import org.springframework.context.annotation.DependsOn;
+import org.junit.runners.MethodSorters;
 
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class ControllerTest extends TestBase {
 
     RestClient C;
@@ -27,6 +26,10 @@ public class ControllerTest extends TestBase {
     List<MetricRecord> recs;
     String ctxt = "testCtxt";
     String[] keys = {"numRequests", "maxRequestTime", "activeThreads", "memoryMB", "numExceptions"};
+
+    public ControllerTest() throws Exception {
+        super();
+    }
 
     @Before
     public void setup() {
@@ -41,25 +44,18 @@ public class ControllerTest extends TestBase {
     }
 
     @Test
-    public void basicKeysRegistration() throws RESTException {
+    public void T1_testKeysRegistration() throws RESTException {
         C.registerKeys(new KeyRegisterRequest(mrid, Arrays.stream(keys).map(k -> ctxt + ":" + k).collect(Collectors.toList())));
     }
 
     @Test
-    public void basicMetricsIngestion() throws RESTException {
+    public void T2_testMetricsIngestion() throws RESTException {
         for (MetricRecord mr : recs) {
             C.postMetric(mr);
         }
-    }
-
-    @Test
-    @DependsOn("basicMetricsIngestion")
-    public void ingestValidation() throws RESTException {
         List<MetricRecord> metrics = C
                 .getMetrics(new MetricRequest<Short>(recs.get(0).getTs(), recs.get(recs.size() - 1).getTs() + 1, mrid,
-                        Arrays.asList((short) 1, (short) 2, (short) 3, (short) 4, (short) 5).stream().collect(Collectors.toSet())));
-
-
+                        new HashSet<>(Arrays.asList((short) 1, (short) 2, (short) 3, (short) 4, (short) 5))));
         for (MetricRecord mr1 : recs) {
             boolean exists = false;
             for (MetricRecord mr2 : metrics) {
@@ -75,8 +71,7 @@ public class ControllerTest extends TestBase {
     }
 
     @Test
-    @DependsOn(value = "basicMetricsIngestion")
-    public void testMetaIngestValidation() throws RESTException {
+    public void T3_testMetaIngestValidation() throws RESTException {
         MetaRecord mm = C.getMeta(mrid.getProcessGrp(), mrid.getProcess());
         for (String key : keys) {
             if (mm.getRecords().stream().noneMatch(r -> r.getKey().equals(ctxt + ":" + key))) {
@@ -86,8 +81,7 @@ public class ControllerTest extends TestBase {
     }
 
     @Test
-    @DependsOn("basicMetricsIngestion")
-    public void testViewsApi() throws RESTException {
+    public void T4_testViewsApi() throws RESTException {
         Set<String> s = Arrays.asList(keys).stream().map(k -> ctxt + ":" + k).collect(Collectors.toSet());
         View vc = new View(mrid, "myView", new ViewData(s));
         Views vs = new Views();
@@ -102,8 +96,7 @@ public class ControllerTest extends TestBase {
     }
 
     @Test
-    @DependsOn("basicMetricsIngestion")
-    public void testProcGroupApi() throws RESTException {
+    public void T5_testProcGroupApi() throws RESTException {
         for (String pg : C.getProcessGroups()) {
             if (pg.equals(mrid.getProcessGrp()))
                 return;
@@ -112,8 +105,7 @@ public class ControllerTest extends TestBase {
     }
 
     @Test
-    @DependsOn("basicKeysRegistration")
-    public void testProcsApi() throws RESTException {
+    public void T6_testProcsApi() throws RESTException {
         for (String p : C.getProcesses(mrid.getProcessGrp())) {
             if (p.equals(mrid.getProcess()))
                 return;

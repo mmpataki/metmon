@@ -16,11 +16,11 @@ public class TestBase {
 		if(!initDone) {
 			synchronized (TestBase.class) {
 				if(!initDone) {
-					SpringApplication.run(MetmonApp.class, new String[0]);
+					SpringApplication.run(MetmonApp.class);
 					initDone = true;
 				}
 			}
 		}
 	}
-	
+
 }
