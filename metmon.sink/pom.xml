@@ -36,6 +36,11 @@
 			<version>2.3.1</version>
 			<scope>compile</scope>
 		</dependency>
+		<dependency>
+			<groupId>com.mmp</groupId>
+			<artifactId>metmon.rest.client</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
 	</dependencies>
 	<build>
 		<plugins>

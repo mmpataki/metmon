@@ -20,6 +20,7 @@ public class MetmonSink implements MetricsSink {
     Logger LOG = Logger.getLogger(MetmonSink.class);
     RestClient C;
     ProcIdentifier mrid;
+    boolean binary = true;
 
     /* buffering data-structures */
     int maxPublishBuffered;
@@ -58,6 +59,7 @@ public class MetmonSink implements MetricsSink {
         C = new RestClient(resolve(conf.getString("url")));
         mrid = new ProcIdentifier(resolve(conf.getString("procGrp")), resolve(conf.getString("procName")));
         maxPublishBuffered = conf.getInt("bufferedPublishes", 5);
+        binary = conf.getBoolean("useBinaryProtocol", true);
     }
 
     @Override
@@ -96,7 +98,11 @@ public class MetmonSink implements MetricsSink {
         }
 
         try {
-            C.postMetric(mr);
+            if(binary) {
+                C.postMetricBinary(mr);
+            } else {
+                C.postMetric(mr);
+            }
         } catch (Throwable e) {
             e.printStackTrace();
         }
