@@ -7,7 +7,7 @@ public class MetmonConfiguration extends Configuration {
 
 	/* storage */
 	public static final String STORAGE_BACKEND_CLASS = "storage.backend.class";
-	public static final String STORAGE_BACKEND_CLASS_DEFAULT = "metmon.store.hbase.HBaseStore";
+	public static final String STORAGE_BACKEND_CLASS_DEFAULT = "metmon.inmemstore.InMemStore";
 
 	/* store decorators */
 	public static final String STORE_DECOR_PROFILE = "store.%s.decorators";

@@ -8,5 +8,5 @@
 		<name>store.processtore.decorators</name>
 		<value>metmon.store.kvcache.CachingStore</value>
 	</property>
-	
+
 </configuration>
