@@ -16,8 +16,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import metmon.model.meta.MetaRecord;
 import metmon.model.meta.Views;
-import metmon.rest.controllers.util.NullObject;
-import metmon.rest.controllers.util.RESTResponse;
+import metmon.rest.client.NullObject;
+import metmon.rest.client.RESTResponse;
 import metmon.rest.services.MetricMetaService;
 import metmon.rest.services.ProcessService;
 import metmon.rest.services.ViewsService;

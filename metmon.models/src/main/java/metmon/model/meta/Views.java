@@ -40,11 +40,10 @@ public class Views extends StoreRecord<String, String, View> {
 	}
 	
 	@Override
-	@Transient
 	public List<View> getRecords() {
 		return super.getRecords();
 	}
-	
+
 	public List<View> getViews() {
 		return super.getRecords();
 	}
