@@ -1,0 +1,26 @@
+{
+  "name": "metmon-metmon",
+  "version": "1.0.0",
+  "description": "metmon datasource",
+  "scripts": {
+    "build": "grafana-toolkit plugin:build",
+    "test": "grafana-toolkit plugin:test",
+    "dev": "grafana-toolkit plugin:dev",
+    "watch": "grafana-toolkit plugin:dev --watch"
+  },
+  "author": "Madhusoodan P",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@grafana/data": "next",
+    "@grafana/toolkit": "next",
+    "@grafana/ui": "next",
+    "@types/lodash": "latest"
+  },
+  "engines": {
+    "node": ">=12 <13"
+  },
+  "dependencies": {
+    "@grafana/runtime": "^6.7.3",
+    "typed-rest-client": "^1.7.3"
+  }
+}
