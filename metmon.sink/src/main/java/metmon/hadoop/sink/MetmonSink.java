@@ -36,15 +36,42 @@ public class MetmonSink implements MetricsSink {
      */
     Map<String, Short> keyMap = new HashMap<>();
 
-    String resolve(String val) {
+    public String resolve(String val) {
+        int chunkNum = 0;
         StringBuilder sb = new StringBuilder();
-        for (String chunk : val.split(",")) {
+        for (String chunk : val.split(";")) {
+
+            if(chunkNum++ != 0)
+                sb.append("_");
+
+            chunk = chunk.trim();
+
+            boolean ranged = false;
+            int from = 0, to = 0;
+            if(chunk.endsWith(")")) {
+                ranged = true;
+                String range = chunk.substring(chunk.indexOf('(') + 1, chunk.length() - 1);
+                from = Integer.parseInt(range.split(",")[0].trim());
+                to = Integer.parseInt(range.split(",")[1].trim());
+            }
+
+            if(ranged) {
+                chunk = chunk.substring(0, chunk.indexOf('('));
+            }
+
+            String v;
             if (chunk.startsWith("-D"))
-                sb.append(System.getProperty(chunk.substring(2)));
+                v = System.getProperty(chunk.substring(2));
             else if (chunk.startsWith("-E"))
-                sb.append(System.getenv(chunk.substring(2)));
+                v = System.getenv(chunk.substring(2));
             else
-                sb.append(chunk);
+                v = chunk;
+
+            if(ranged) {
+                v = v.substring(from, to);
+            }
+
+            sb.append(v);
         }
         return sb.toString();
     }
