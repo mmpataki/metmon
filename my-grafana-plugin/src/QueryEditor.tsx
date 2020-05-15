@@ -7,13 +7,20 @@ import { MyDataSourceOptions, MyQuery } from './types';
 type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>;
 
 export class MyState {
-  query: MyQuery | undefined = undefined;
+  processGroup: string | undefined = undefined;
+  process: string | undefined = undefined;
+  mgroup: string | undefined = undefined;
+  metric: string | undefined = undefined;
+
   pgOptions: Array<SelectableValue<string>> = [];
   pOptions: Array<SelectableValue<string>> = [];
   mgOptions: Array<SelectableValue<string>> = [];
   mOptions: Array<SelectableValue<string>> = [];
   constructor(query: MyQuery) {
-    this.query = query;
+    this.processGroup = query.processGroup;
+    this.process = query.process;
+    this.mgroup = query.mgroup;
+    this.metric = query.metric + '';
   }
 }
 
@@ -29,7 +36,7 @@ export class QueryEditor extends PureComponent<Props, MyState> {
     this.setPgOptions();
   }
 
-  setPgOptions() {
+  setPgOptions = async () => {
     console.log('===> pg promise');
     this.setState({ pgOptions: [] });
     this.MC.getProcessGrps().then((pgs: ProcessGroup[]) => {
@@ -41,9 +48,9 @@ export class QueryEditor extends PureComponent<Props, MyState> {
       console.log('<=== pg promise');
       this.setPOptions();
     });
-  }
+  };
 
-  async setPOptions() {
+  setPOptions = async () => {
     console.log(`===> p promise ${this.query.processGroup}`);
     this.setState({ pOptions: [] });
     let pg: ProcessGroup = await this.MC.getProcessGrp(this.query.processGroup);
@@ -58,9 +65,9 @@ export class QueryEditor extends PureComponent<Props, MyState> {
       console.log(`<=== p promise ${this.query.processGroup}`);
       this.setMgOptions();
     });
-  }
+  };
 
-  async setMgOptions() {
+  setMgOptions = async () => {
     console.log(`===> mg promise [${this.query.processGroup}, ${this.query.process}]`);
     this.setState({ mgOptions: [] });
     let pg: ProcessGroup = await this.MC.getProcessGrp(this.query.processGroup);
@@ -83,9 +90,9 @@ export class QueryEditor extends PureComponent<Props, MyState> {
       console.log(`<=== mg promise [${this.query.processGroup}, ${this.query.process}]`);
       this.setMOptions();
     });
-  }
+  };
 
-  async setMOptions() {
+  setMOptions = async () => {
     console.log(`===> m promise [${this.query.processGroup}, ${this.query.process}, ${this.query.mgroup}]`);
     this.setState({ mOptions: [] });
     let pg: ProcessGroup = await this.MC.getProcessGrp(this.query.processGroup);
@@ -112,11 +119,13 @@ export class QueryEditor extends PureComponent<Props, MyState> {
     });
     this.setState({ mOptions: ret });
     console.log(`<=== m promise [${this.query.processGroup}, ${this.query.process}, ${this.query.mgroup}]`);
-  }
+  };
 
   onProcessGroupChange = (value: SelectableValue<string>) => {
     const { onChange, query } = this.props;
+    this.query = { ...query, processGroup: value.value + '', process: '', mgroup: '', metric: -1 };
     onChange({ ...query, processGroup: value.value + '' });
+    this.setState({ processGroup: value.value, process: undefined, mgroup: undefined, metric: undefined });
     this.setPOptions();
   };
 
@@ -124,14 +133,15 @@ export class QueryEditor extends PureComponent<Props, MyState> {
     const { onChange, query } = this.props;
     this.query = { ...query, process: value.value + '', mgroup: '', metric: -1 };
     onChange({ ...this.query });
-    this.setState({ query: this.query });
+    this.setState({ process: value.value, mgroup: undefined, metric: undefined });
     this.setMgOptions();
   };
 
   onMetricGroupChange = (value: SelectableValue<string>) => {
     const { onChange, query } = this.props;
+    this.query = { ...query, mgroup: value.value + '', metric: -1 };
     onChange({ ...query, mgroup: value.value + '', metric: -1 });
-    this.setState({ query: this.query });
+    this.setState({ mgroup: value.value, metric: undefined });
     this.setMOptions();
   };
 
@@ -142,7 +152,7 @@ export class QueryEditor extends PureComponent<Props, MyState> {
     }
     const { onChange, query, onRunQuery } = this.props;
     onChange({ ...query, metric: m });
-    this.setState({});
+    this.setState({ metric: value.value });
     onRunQuery();
   };
 
@@ -155,7 +165,7 @@ export class QueryEditor extends PureComponent<Props, MyState> {
             options={this.state.pgOptions}
             onChange={this.onProcessGroupChange}
             isLoading={this.state.pgOptions.length === 0}
-            value={this.state.query?.processGroup}
+            value={this.state.processGroup}
             placeholder="choose"
           />
           &nbsp;&nbsp;
@@ -164,7 +174,7 @@ export class QueryEditor extends PureComponent<Props, MyState> {
             options={this.state.pOptions}
             onChange={this.onProcessChange}
             isLoading={this.state.pOptions.length === 0}
-            value={this.state.query?.process}
+            value={this.state.process}
             placeholder="choose"
           />
         </div>
@@ -174,7 +184,7 @@ export class QueryEditor extends PureComponent<Props, MyState> {
             options={this.state.mgOptions}
             isLoading={this.state.mgOptions.length === 0}
             onChange={this.onMetricGroupChange}
-            value={this.state.query?.mgroup}
+            value={this.state.mgroup}
             noOptionsMessage="choose"
             placeholder="choose"
           />
@@ -184,7 +194,7 @@ export class QueryEditor extends PureComponent<Props, MyState> {
             options={this.state.mOptions}
             onChange={this.onMetricChange}
             isLoading={this.state.mOptions.length === 0}
-            value={this.state.query?.metric + ''}
+            value={this.state.metric}
             placeholder="choose"
           />
         </div>
