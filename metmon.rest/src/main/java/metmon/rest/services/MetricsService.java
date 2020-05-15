@@ -32,7 +32,7 @@ public class MetricsService {
 
     @PostConstruct
     public void init() throws Exception {
-        stores = new Stores<Short, Double, MetricRecord, Metric>("metricstore", conf, new SerDes.ShortSerde(),
+        stores = new Stores<>("metricstore", conf, new SerDes.ShortSerde(),
                 new SerDes.DoubleSerde());
         setupFilters(conf);
     }

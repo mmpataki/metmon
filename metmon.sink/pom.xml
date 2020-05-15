@@ -66,6 +66,8 @@
 									<include>com.mmp:metmon.core</include>
 									<include>com.mmp:metmon.store</include>
 									<include>com.mmp:metmon.models</include>
+									<include>com.mmp:metmon.rest.client</include>
+									<include>com.google.code.gson:gson</include>
 								</includes>
 							</artifactSet>
 						</configuration>

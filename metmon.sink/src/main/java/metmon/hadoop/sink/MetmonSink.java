@@ -1,5 +1,7 @@
 package metmon.hadoop.sink;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -57,7 +59,14 @@ public class MetmonSink implements MetricsSink {
     public void init(SubsetConfiguration conf) {
         System.out.println(conf);
         C = new RestClient(resolve(conf.getString("url")));
-        mrid = new ProcIdentifier(resolve(conf.getString("procGrp")), resolve(conf.getString("procName")));
+        try {
+            mrid = new ProcIdentifier(
+                    resolve(conf.getString("procGrp")),
+                    resolve(conf.getString("procName")) + "-" +  InetAddress.getLocalHost().getCanonicalHostName()
+            );
+        } catch (UnknownHostException e) {
+            LOG.error("error while getting hostname of this machine", e);
+        }
         maxPublishBuffered = conf.getInt("bufferedPublishes", 5);
         binary = conf.getBoolean("useBinaryProtocol", true);
     }

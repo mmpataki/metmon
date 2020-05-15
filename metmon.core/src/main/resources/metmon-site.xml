@@ -8,5 +8,8 @@
 		<name>store.processtore.decorators</name>
 		<value>metmon.store.kvcache.CachingStore</value>
 	</property>
-
+	<property>
+		<name>storage.backend.class</name>
+		<value>metmon.store.hbase.HBaseStore</value>
+	</property>
 </configuration>
