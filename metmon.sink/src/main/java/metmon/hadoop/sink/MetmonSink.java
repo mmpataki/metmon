@@ -37,12 +37,16 @@ public class MetmonSink implements MetricsSink {
     Map<String, Short> keyMap = new HashMap<>();
 
     String resolve(String val) {
-        if (val.startsWith("-D"))
-            return System.getProperty(val.substring(2));
-        else if (val.startsWith("-E"))
-            return System.getenv(val.substring(2));
-        else
-            return val;
+        StringBuilder sb = new StringBuilder();
+        for (String chunk : val.split(",")) {
+            if (chunk.startsWith("-D"))
+                sb.append(System.getProperty(chunk.substring(2)));
+            else if (chunk.startsWith("-E"))
+                sb.append(System.getenv(chunk.substring(2)));
+            else
+                sb.append(chunk);
+        }
+        return sb.toString();
     }
 
     /* for hadoop */
