@@ -11,6 +11,8 @@ import * as rm from 'typed-rest-client/RestClient';
 
 import { MyQuery, MyDataSourceOptions } from './types';
 
+let pgpToMKeys: Record<string, Record<number, string>> = {};
+
 export class MetricKey {
   name: string;
   desc: string;
@@ -28,16 +30,19 @@ export class Process {
   rest: rm.RestClient;
   p: Promise<Record<string, MetricKey[]>> | undefined = undefined;
   metricGroups: Record<string, MetricKey[]> = {};
+
   constructor(name: string, pg: string, rs: rm.RestClient) {
     this.name = name;
     this.rest = rs;
     this.pg = pg;
+    pgpToMKeys[pg + ':' + name] = {};
   }
   addMetric(metricGrp: string, metricKey: MetricKey) {
     if (!this.metricGroups[metricGrp]) {
       this.metricGroups[metricGrp] = [];
     }
     this.metricGroups[metricGrp].push(metricKey);
+    pgpToMKeys[this.pg + ':' + this.name][metricKey.id] = this.name + '-' + metricGrp + '-' + metricKey.name;
   }
   async getMetricGroups(): Promise<Record<string, MetricKey[]>> {
     if (this.p !== undefined) {
@@ -190,32 +195,28 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     return this.metricsMeta;
   }
 
-  async query(options: DataQueryRequest<MyQuery>): Promise<DataQueryResponse> {
-    let refIdMap: Record<string, string> = {};
-    let queries: Record<string, number[]> = {};
+  query(options: DataQueryRequest<MyQuery>): Promise<DataQueryResponse> {
+    return new Promise((resolve, reject) => {
+      let refIdMap: Record<string, string> = {};
+      let queries: Record<string, number[]> = {};
 
-    options.targets.map(tgt => {
-      if (tgt.processGroup === '' || tgt.process === '' || tgt.metric === -1) {
-        return;
-      }
-      let key = tgt.processGroup + ':' + tgt.process;
-      if (!queries[key]) {
-        queries[key] = [];
-      }
-      queries[key].push(tgt.metric);
-      refIdMap[key + ':' + tgt.metric] = tgt.refId;
-    });
+      /* record the conversion info */
+      options.targets.map(tgt => {
+        if (tgt.processGroup === '' || tgt.process === '' || tgt.metric === -1) {
+          return;
+        }
+        let key = tgt.processGroup + ':' + tgt.process;
+        if (!queries[key]) {
+          queries[key] = [];
+        }
+        queries[key].push(tgt.metric);
+        refIdMap[key + ':' + tgt.metric] = tgt.refId;
+      });
 
-    let ret: Record<string, MutableDataFrame> = {};
+      let ret: Record<string, MutableDataFrame> = {};
+      let reqPromises: Array<Promise<rm.IRestResponse<ApiResponse<Metrics[]>>>> = [];
 
-    let sent = 0;
-    let comp = 0;
-
-    await new Promise((resolve, reject) => {
-      Object.entries(queries).forEach(async e => {
-        this.rest.update;
-
-        sent++;
+      Object.entries(queries).forEach(e => {
         let metReq = {
           from: options.range.from.valueOf(),
           id: {
@@ -226,39 +227,51 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
           keys: e[1],
         };
         console.log(JSON.stringify(metReq));
-        let resp = (await this.rest.create<ApiResponse<Metrics[]>>('/metmon/metrics', metReq)).result;
+        reqPromises.push(this.rest.create<ApiResponse<Metrics[]>>('/metmon/metrics', metReq));
+      });
 
-        if (!resp?.success) {
-          return;
-        }
-        resp?.item.forEach(r => {
-          let id = r.id.processGrp + ':' + r.id.process;
-
-          r.records.forEach(m => {
-            let key = id + ':' + m.key;
-            if (ret[key] === undefined) {
-              ret[key] = new MutableDataFrame({
-                refId: refIdMap[key],
-                fields: [
-                  { name: 'Time', values: [], type: FieldType.time },
-                  { name: 'Value', values: [], type: FieldType.number },
-                ],
-              });
-            }
-
-            //time
-            ret[key].fields[0].values.add(r.ts);
-            ret[key].fields[1].values.add(m.value);
-            comp++;
-            if (comp === sent) {
-              resolve();
-            }
-          });
+      new Promise((rs, rj) => {
+        Object.keys(queries).forEach(pgp => {
+          let pg = pgp.split(':')[0];
+          let p = pgp.split(':')[1];
+          this.getMetaData()
+            .getProcessGrp(pg)
+            .then(pg => pg.getProcess(p).then(p => p.getMetricGroups().then(() => rs())));
         });
+      }).then(() => {
+        Promise.all(reqPromises)
+          .then(respPromises => {
+            respPromises.forEach(r_resp => {
+              let resp = r_resp.result;
+              if (!resp?.success) {
+                return;
+              }
+              resp?.item.forEach(r => {
+                let id = r.id.processGrp + ':' + r.id.process;
+                r.records.forEach(m => {
+                  let key = id + ':' + m.key;
+                  if (ret[key] === undefined) {
+                    ret[key] = new MutableDataFrame({
+                      refId: refIdMap[key],
+                      fields: [
+                        { name: 'Time', values: [], type: FieldType.time },
+                        { name: 'Value', values: [], type: FieldType.number },
+                      ],
+                      name: pgpToMKeys[id][m.key],
+                    });
+                  }
+                  //time
+                  ret[key].fields[0].values.add(r.ts);
+                  ret[key].fields[1].values.add(m.value);
+                });
+              });
+            });
+          })
+          .then(() => {
+            resolve({ data: Object.values(ret) });
+          });
       });
     });
-
-    return { data: Object.values(ret) };
   }
 
   async testDatasource() {

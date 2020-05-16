@@ -19892,6 +19892,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
+var pgpToMKeys = {};
 
 var MetricKey =
 /** @class */
@@ -19916,6 +19917,7 @@ function () {
     this.name = name;
     this.rest = rs;
     this.pg = pg;
+    pgpToMKeys[pg + ':' + name] = {};
   }
 
   Process.prototype.addMetric = function (metricGrp, metricKey) {
@@ -19924,6 +19926,7 @@ function () {
     }
 
     this.metricGroups[metricGrp].push(metricKey);
+    pgpToMKeys[this.pg + ':' + this.name][metricKey.id] = this.name + '-' + metricGrp + '-' + metricKey.name;
   };
 
   Process.prototype.getMetricGroups = function () {
@@ -20135,118 +20138,98 @@ function (_super) {
   };
 
   DataSource.prototype.query = function (options) {
-    return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, Promise, function () {
-      var refIdMap, queries, ret, sent, comp;
+    var _this = this;
 
-      var _this = this;
+    return new Promise(function (resolve, reject) {
+      var refIdMap = {};
+      var queries = {};
+      /* record the conversion info */
 
-      return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__generator"])(this, function (_a) {
-        switch (_a.label) {
-          case 0:
-            refIdMap = {};
-            queries = {};
-            options.targets.map(function (tgt) {
-              if (tgt.processGroup === '' || tgt.process === '' || tgt.metric === -1) {
-                return;
-              }
-
-              var key = tgt.processGroup + ':' + tgt.process;
-
-              if (!queries[key]) {
-                queries[key] = [];
-              }
-
-              queries[key].push(tgt.metric);
-              refIdMap[key + ':' + tgt.metric] = tgt.refId;
-            });
-            ret = {};
-            sent = 0;
-            comp = 0;
-            return [4
-            /*yield*/
-            , new Promise(function (resolve, reject) {
-              Object.entries(queries).forEach(function (e) {
-                return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(_this, void 0, void 0, function () {
-                  var metReq, resp;
-
-                  var _a, _b;
-
-                  return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__generator"])(this, function (_c) {
-                    switch (_c.label) {
-                      case 0:
-                        this.rest.update;
-                        sent++;
-                        metReq = {
-                          from: options.range.from.valueOf(),
-                          id: {
-                            process: e[0].split(':')[1],
-                            processGrp: e[0].split(':')[0]
-                          },
-                          to: options.range.to.valueOf(),
-                          keys: e[1]
-                        };
-                        console.log(JSON.stringify(metReq));
-                        return [4
-                        /*yield*/
-                        , this.rest.create('/metmon/metrics', metReq)];
-
-                      case 1:
-                        resp = _c.sent().result;
-
-                        if (!((_a = resp) === null || _a === void 0 ? void 0 : _a.success)) {
-                          return [2
-                          /*return*/
-                          ];
-                        }
-
-                        (_b = resp) === null || _b === void 0 ? void 0 : _b.item.forEach(function (r) {
-                          var id = r.id.processGrp + ':' + r.id.process;
-                          r.records.forEach(function (m) {
-                            var key = id + ':' + m.key;
-
-                            if (ret[key] === undefined) {
-                              ret[key] = new _grafana_data__WEBPACK_IMPORTED_MODULE_1__["MutableDataFrame"]({
-                                refId: refIdMap[key],
-                                fields: [{
-                                  name: 'Time',
-                                  values: [],
-                                  type: _grafana_data__WEBPACK_IMPORTED_MODULE_1__["FieldType"].time
-                                }, {
-                                  name: 'Value',
-                                  values: [],
-                                  type: _grafana_data__WEBPACK_IMPORTED_MODULE_1__["FieldType"].number
-                                }]
-                              });
-                            } //time
-
-
-                            ret[key].fields[0].values.add(r.ts);
-                            ret[key].fields[1].values.add(m.value);
-                            comp++;
-
-                            if (comp === sent) {
-                              resolve();
-                            }
-                          });
-                        });
-                        return [2
-                        /*return*/
-                        ];
-                    }
-                  });
-                });
-              });
-            })];
-
-          case 1:
-            _a.sent();
-
-            return [2
-            /*return*/
-            , {
-              data: Object.values(ret)
-            }];
+      options.targets.map(function (tgt) {
+        if (tgt.processGroup === '' || tgt.process === '' || tgt.metric === -1) {
+          return;
         }
+
+        var key = tgt.processGroup + ':' + tgt.process;
+
+        if (!queries[key]) {
+          queries[key] = [];
+        }
+
+        queries[key].push(tgt.metric);
+        refIdMap[key + ':' + tgt.metric] = tgt.refId;
+      });
+      var ret = {};
+      var reqPromises = [];
+      Object.entries(queries).forEach(function (e) {
+        var metReq = {
+          from: options.range.from.valueOf(),
+          id: {
+            process: e[0].split(':')[1],
+            processGrp: e[0].split(':')[0]
+          },
+          to: options.range.to.valueOf(),
+          keys: e[1]
+        };
+        console.log(JSON.stringify(metReq));
+        reqPromises.push(_this.rest.create('/metmon/metrics', metReq));
+      });
+      new Promise(function (rs, rj) {
+        Object.keys(queries).forEach(function (pgp) {
+          var pg = pgp.split(':')[0];
+          var p = pgp.split(':')[1];
+
+          _this.getMetaData().getProcessGrp(pg).then(function (pg) {
+            return pg.getProcess(p).then(function (p) {
+              return p.getMetricGroups().then(function () {
+                return rs();
+              });
+            });
+          });
+        });
+      }).then(function () {
+        Promise.all(reqPromises).then(function (respPromises) {
+          respPromises.forEach(function (r_resp) {
+            var _a, _b;
+
+            var resp = r_resp.result;
+
+            if (!((_a = resp) === null || _a === void 0 ? void 0 : _a.success)) {
+              return;
+            }
+
+            (_b = resp) === null || _b === void 0 ? void 0 : _b.item.forEach(function (r) {
+              var id = r.id.processGrp + ':' + r.id.process;
+              r.records.forEach(function (m) {
+                var key = id + ':' + m.key;
+
+                if (ret[key] === undefined) {
+                  ret[key] = new _grafana_data__WEBPACK_IMPORTED_MODULE_1__["MutableDataFrame"]({
+                    refId: refIdMap[key],
+                    fields: [{
+                      name: 'Time',
+                      values: [],
+                      type: _grafana_data__WEBPACK_IMPORTED_MODULE_1__["FieldType"].time
+                    }, {
+                      name: 'Value',
+                      values: [],
+                      type: _grafana_data__WEBPACK_IMPORTED_MODULE_1__["FieldType"].number
+                    }],
+                    name: pgpToMKeys[id][m.key]
+                  });
+                } //time
+
+
+                ret[key].fields[0].values.add(r.ts);
+                ret[key].fields[1].values.add(m.value);
+              });
+            });
+          });
+        }).then(function () {
+          resolve({
+            data: Object.values(ret)
+          });
+        });
       });
     });
   };
