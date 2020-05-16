@@ -40,6 +40,25 @@ A simple metrics monitor with simplicity and efficiency in mind.
     ````
 
 #### Config properties
+To dynamically discover / create process-group and process names, few utilities are provided. Using which one can create values for process-group and process dynamically based on the execution environment. For eg.
+
+One may want to monitor HBase executing on Yarn deployed via apache slider. Since there can be many instances (possibly in different timeframes) one may want to separate the metrics for each instance.
+
+We can achieve this by using the below configuration
+````properties
+# for master
+hbase.sink.metmon1.class=metmon.hadoop.sink.MetmonSink
+hbase.sink.metmon1.url=http://foo.bar.com:8080
+hbase.sink.metmon1.procGrp=myhbase_application;-ECONTAINER_ID(9,37)
+hbase.sink.metmon1.procName=HMaster;-ECONTAINER_ID
+
+# for regionserver
+hbase.sink.metmon1.class=metmon.hadoop.sink.MetmonSink
+hbase.sink.metmon1.url=http://foo.bar.com:8080
+hbase.sink.metmon1.procGrp=myhbase_application;-ECONTAINER_ID(9,37)
+hbase.sink.metmon1.procName=HRegionServer;-ECONTAINER_ID
+````
+BNF Grammar
 ````properties
 url := to_be_resolved
 procGrp := to_be_resolved
@@ -61,24 +80,4 @@ key := [A-Za-z0-9]+ //JVM argument / Environment variable name (the value for th
 Refer below links for implementation and tests:
 https://github.com/mmpataki/metmon/blob/master/metmon.sink/src/main/java/metmon/hadoop/sink/MetmonSink.java:resolve
 https://github.com/mmpataki/metmon/blob/master/metmon.sink/src/test/java/TestNameResolution.java
-````
-
-##### What is resolve()?
-To dynamically discover / create process-group and process names, few utilities are provided. Using which one can create values for process-group and process dynamically based on the execution environment. For eg.
-
-One may want to monitor HBase executing on Yarn deployed via apache slider. Since there can be many instances (possibly in different timeframes) one may want to separate the metrics for each instance.
-
-We can achieve this by using the below configuration
-````properties
-# for master
-hbase.sink.metmon1.class=metmon.hadoop.sink.MetmonSink
-hbase.sink.metmon1.url=http://foo.bar.com:8080
-hbase.sink.metmon1.procGrp=myhbase_application;-ECONTAINER_ID(9,37)
-hbase.sink.metmon1.procName=HMaster;-ECONTAINER_ID
-
-# for regionserver
-hbase.sink.metmon1.class=metmon.hadoop.sink.MetmonSink
-hbase.sink.metmon1.url=http://foo.bar.com:8080
-hbase.sink.metmon1.procGrp=myhbase_application;-ECONTAINER_ID(9,37)
-hbase.sink.metmon1.procName=HRegionServer;-ECONTAINER_ID
 ````
