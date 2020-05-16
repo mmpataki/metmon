@@ -10,6 +10,6 @@
 	</property>
 	<property>
 		<name>storage.backend.class</name>
-		<value>metmon.store.hbase.HBaseStore</value>
+		<value>metmon.inmemstore.InMemStore</value>
 	</property>
 </configuration>
