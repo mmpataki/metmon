@@ -40,19 +40,44 @@ A simple metrics monitor with simplicity and efficiency in mind.
     ````
 
 #### Config properties
-url := `resolve(URL of the metmon server)`  
-procGrp := `resolve(Process group the app being configured belong to)`   
-procName := `resolve(Process name of this process in the group)`
+To dynamically discover / create process-group and process names, few utilities are provided. Using which one can create values for process-group and process dynamically based on the execution environment. For eg.
 
-##### What is resolve()?
-This is the definition of the resolve().
-````java
-String resolve(String x) {
-    if(x.startsWith("-D")) {
-        return System.getProperty(x.substring(2));
-    } else if(x.startsWith("-E")) {
-        return System.getEnv(x.substring(2));
-    }
-    return x;
-}
+One may want to monitor HBase executing on Yarn deployed via apache slider. Since there can be many instances (possibly in different timeframes) one may want to separate the metrics for each instance.
+
+We can achieve this by using the below configuration
+````properties
+# for master
+hbase.sink.metmon1.class=metmon.hadoop.sink.MetmonSink
+hbase.sink.metmon1.url=http://foo.bar.com:8080
+hbase.sink.metmon1.procGrp=myhbase_application;-ECONTAINER_ID(9,37)
+hbase.sink.metmon1.procName=HMaster;-ECONTAINER_ID
+
+# for regionserver
+hbase.sink.metmon1.class=metmon.hadoop.sink.MetmonSink
+hbase.sink.metmon1.url=http://foo.bar.com:8080
+hbase.sink.metmon1.procGrp=myhbase_application;-ECONTAINER_ID(9,37)
+hbase.sink.metmon1.procName=HRegionServer;-ECONTAINER_ID
+````
+BNF Grammar
+````properties
+url := to_be_resolved
+procGrp := to_be_resolved
+procName := to_be_resolved
+
+to_be_resolved := to_be_resolved | to_be_resolved ';' to_be_resolved | with_substring
+with_substring := may_be_value | may_be_value '(' [0-9]+ ',' [0-9]+ ')'
+may_be_value := constant | from_jvm_arg | from_env_var
+
+constant := metmon_http_url | proc_group_name | process_name
+metmon_http_url := "http://xyz.abc.com:8080"  // http url of the metmon server
+proc_group_name := [A-Za-z0-9]* //an arbitary name for group of the processes (for grouping)
+process_name := [A-Za-z0-9]* //name for the process who is publishing these metrics
+
+from_jvm_arg := '-D' key
+from_env_var := '-E' key
+key := [A-Za-z0-9]+ //JVM argument / Environment variable name (the value for this key will be read)
+
+Refer below links for implementation and tests:
+https://github.com/mmpataki/metmon/blob/master/metmon.sink/src/main/java/metmon/hadoop/sink/MetmonSink.java:resolve
+https://github.com/mmpataki/metmon/blob/master/metmon.sink/src/test/java/TestNameResolution.java
 ````
