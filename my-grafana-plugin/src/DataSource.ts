@@ -196,15 +196,24 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   }
 
   query(options: DataQueryRequest<MyQuery>): Promise<DataQueryResponse> {
+    let fail = false;
+    options.targets.map(tgt => {
+      if (tgt.processGroup === '' || tgt.process === '' || tgt.metric === -1) {
+        fail = true;
+      }
+    });
+
+    let xoo: MutableDataFrame[] = [];
+    if (fail) {
+      return new Promise((r1, r2) => r1({ data: xoo }));
+    }
+
     return new Promise((resolve, reject) => {
       let refIdMap: Record<string, string> = {};
       let queries: Record<string, number[]> = {};
 
       /* record the conversion info */
       options.targets.map(tgt => {
-        if (tgt.processGroup === '' || tgt.process === '' || tgt.metric === -1) {
-          return;
-        }
         let key = tgt.processGroup + ':' + tgt.process;
         if (!queries[key]) {
           queries[key] = [];
