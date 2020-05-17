@@ -198,7 +198,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   query(options: DataQueryRequest<MyQuery>): Promise<DataQueryResponse> {
     let fail = false;
     options.targets.map(tgt => {
-      if (tgt.processGroup === '' || tgt.process === '' || tgt.metric === -1) {
+      if (tgt.processGroup === undefined || tgt.process === undefined || tgt.metric === undefined) {
         fail = true;
       }
     });
