@@ -20140,16 +20140,27 @@ function (_super) {
   DataSource.prototype.query = function (options) {
     var _this = this;
 
+    var fail = false;
+    options.targets.map(function (tgt) {
+      if (tgt.processGroup === undefined || tgt.process === undefined || tgt.metric === undefined) {
+        fail = true;
+      }
+    });
+    var xoo = [];
+
+    if (fail) {
+      return new Promise(function (r1, r2) {
+        return r1({
+          data: xoo
+        });
+      });
+    }
     return new Promise(function (resolve, reject) {
       var refIdMap = {};
       var queries = {};
       /* record the conversion info */
 
       options.targets.map(function (tgt) {
-        if (tgt.processGroup === '' || tgt.process === '' || tgt.metric === -1) {
-          return;
-        }
-
         var key = tgt.processGroup + ':' + tgt.process;
 
         if (!queries[key]) {
