@@ -26,6 +26,7 @@
             <groupId>com.mmp</groupId>
             <artifactId>metmon.rest</artifactId>
             <version>0.0.1-SNAPSHOT</version>
+            <type>war</type>
         </dependency>
         <dependency>
             <groupId>com.mmp</groupId>

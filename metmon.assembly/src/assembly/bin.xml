@@ -9,6 +9,27 @@
     <includeBaseDirectory>false</includeBaseDirectory>
     <moduleSets>
 
+        <!-- package tomcat -->
+        <moduleSet>
+            <useAllReactorProjects>true</useAllReactorProjects>
+            <includes>
+                <include>com.mmp:metmon.assembly</include>
+            </includes>
+            <sources>
+                <includeModuleDirectory>false</includeModuleDirectory>
+                <outputDirectoryMapping>false</outputDirectoryMapping>
+                <fileSets>
+                    <fileSet>
+                        <directory>${project.basedir}/src/main/resources/tomcat</directory>
+                        <outputDirectory>/tomcat</outputDirectory>
+                        <includes>
+                            <include>*</include>
+                        </includes>
+                    </fileSet>
+                </fileSets>
+            </sources>
+        </moduleSet>
+
         <!-- package the webapp + spring boot -->
         <moduleSet>
             <useAllReactorProjects>true</useAllReactorProjects>
