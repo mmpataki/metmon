@@ -59,7 +59,6 @@
             <groupId>com.mmp</groupId>
             <artifactId>metmon.rest.client</artifactId>
             <version>0.0.1-SNAPSHOT</version>
-            <scope>test</scope>
         </dependency>
     </dependencies>
 
