@@ -7,7 +7,10 @@
 	<script>
 		google.charts.load('current', { 'packages': ['corechart'] });
 		var app = angular.module('metmon', []);
-		var SB = 'http://localhost:8080/metmon';
+		var SB = '';
+		if(window.location.protocol == 'http:')
+			SB = 'http://localhost:8080/metmon';
+
 		var HTTP;
 
 		app.controller('index', function ($scope, $http) {

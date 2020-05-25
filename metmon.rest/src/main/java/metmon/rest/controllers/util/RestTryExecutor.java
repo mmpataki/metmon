@@ -1,8 +1,5 @@
 package metmon.rest.controllers.util;
 
-import metmon.rest.client.NullObject;
-import metmon.rest.client.RESTResponse;
-
 import java.io.PrintWriter;
 import java.io.StringWriter;
 

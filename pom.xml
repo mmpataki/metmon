@@ -18,6 +18,7 @@
         <module>metmon.tools</module>
         <module>metmon.assembly</module>
         <module>metmon.rest.client</module>
+        <module>metmon.etsdb.store</module>
     </modules>
 
     <properties>

@@ -1,4 +1,4 @@
-package metmon.rest.client;
+package metmon.rest.controllers.util;
 
 /* instead of Void, null object */
 public class NullObject {

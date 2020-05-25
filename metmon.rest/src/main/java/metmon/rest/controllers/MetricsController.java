@@ -11,8 +11,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import metmon.model.metric.MetricRecord;
 import metmon.model.metric.MetricRequest;
-import metmon.rest.client.NullObject;
-import metmon.rest.client.RESTResponse;
+import metmon.rest.controllers.util.NullObject;
+import metmon.rest.controllers.util.RESTResponse;
 import metmon.rest.services.MetricsService;
 
 import static metmon.rest.controllers.util.RestTryExecutor.build;
@@ -28,8 +28,8 @@ public class MetricsController {
 
     MetricSerializer S = new MetricSerializer();
 
-    public static final String METRICS_PATH_CREATE = "/metmon/metrics/create";
-    public static final String METRICS_PATH = "/metmon/metrics";
+    public static final String METRICS_PATH_CREATE = "/metrics/create";
+    public static final String METRICS_PATH = "/metrics";
 
     @RequestMapping(method = RequestMethod.POST, value = METRICS_PATH_CREATE)
     RESTResponse<NullObject> publish(@RequestBody MetricRecord update) throws Exception {

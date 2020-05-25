@@ -37,6 +37,9 @@ import metmon.store.StoreRequest;
 
 /* 
  * Store using HBase as storage backend.
+ *
+ * Uses the default configuration of the HBase by default. Configuration
+ * can be specified in metmon.properties
  */
 public class HBaseStore<K, V, R extends StoreRecord<K, V, C>, C extends StoreCell<K, V>> extends BaseStore<K, V, R, C> {
 
@@ -62,8 +65,7 @@ public class HBaseStore<K, V, R extends StoreRecord<K, V, C>, C extends StoreCel
 			synchronized (HBaseStore.class) {
 				if (!initDone) {
 					conf = HBaseConfiguration.create();
-					si.getConf().getAsMap().entrySet().stream().filter(e -> ((String) e.getKey()).startsWith("hbase."))
-							.forEach(e -> conf.set((String) e.getKey(), (String) e.getValue()));
+					si.getConf().getAsMap().entrySet().forEach(kv -> conf.set(kv.getKey(), kv.getValue()));
 					cnx = ConnectionFactory.createConnection(conf);
 				}
 				initDone = true;

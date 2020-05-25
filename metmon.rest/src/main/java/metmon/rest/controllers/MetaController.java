@@ -16,8 +16,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import metmon.model.meta.MetaRecord;
 import metmon.model.meta.Views;
-import metmon.rest.client.NullObject;
-import metmon.rest.client.RESTResponse;
+import metmon.rest.controllers.util.NullObject;
+import metmon.rest.controllers.util.RESTResponse;
 import metmon.rest.services.MetricMetaService;
 import metmon.rest.services.ProcessService;
 import metmon.rest.services.ViewsService;
@@ -26,13 +26,13 @@ import metmon.rest.services.ViewsService;
 @CrossOrigin("*")
 public class MetaController {
 
-    public static final String META_PATH = "/metmon/meta/metrics";
+    public static final String META_PATH = "/meta/metrics";
 
-    public static final String KEYS_PATH = "/metmon/meta/keys";
+    public static final String KEYS_PATH = "/meta/keys";
 
-    public static final String VIEW_PATH = "/metmon/meta/views";
+    public static final String VIEW_PATH = "/meta/views";
 
-    public static final String PROCESSES_PATH = "/metmon/meta/processes";
+    public static final String PROCESSES_PATH = "/meta/processes";
 
     public static final String PROC_GROUPS_PATH = PROCESSES_PATH + "/procgroups";
 

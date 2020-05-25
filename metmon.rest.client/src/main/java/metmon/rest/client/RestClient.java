@@ -1,7 +1,6 @@
 package metmon.rest.client;
 
 import com.google.gson.Gson;
-import com.sun.jersey.api.client.Client;
 import metmon.model.meta.KeyRegisterRequest;
 import metmon.model.meta.MetaRecord;
 import metmon.model.meta.Views;
@@ -19,21 +18,74 @@ import java.util.*;
 
 public class RestClient {
 
-    String baseUrl;
+    static public class NullObject {
+        @Override
+        public String toString() {
+            return "null";
+        }
+    }
 
-    Client client;
+    public class RESTResponse<ReturnObject> {
+
+        String error;
+        boolean success;
+        ReturnObject item;
+
+        public RESTResponse(ReturnObject obj) {
+            item = obj;
+            success = true;
+            error = null;
+        }
+
+        public RESTResponse(String err) {
+            item = null;
+            error = err;
+            success = false;
+        }
+
+        public RESTResponse() {
+            // TODO Auto-generated constructor stub
+        }
+
+        public String getError() {
+            return error;
+        }
+
+        public void setError(String error) {
+            this.error = error;
+        }
+
+        public boolean isSuccess() {
+            return success;
+        }
+
+        public void setSuccess(boolean success) {
+            this.success = success;
+        }
+
+        public ReturnObject getItem() {
+            return item;
+        }
+
+        public void setItem(ReturnObject item) {
+            this.item = item;
+        }
+    }
+
+
+    String baseUrl;
 
     MetricSerializer S;
 
-    public static final String KEYS_PATH = "/metmon/meta/keys";
-    public static final String METRICS_PUT_PATH = "/metmon/metrics/create";
+    public static final String KEYS_PATH = "/meta/keys";
+    public static final String METRICS_PUT_PATH = "/metrics/create";
 
-    public static final String METRICS_GET_PATH = "/metmon/metrics";
+    public static final String METRICS_GET_PATH = "/metrics";
 
-    public static final String META_PATH = "/metmon/meta/metrics";
+    public static final String META_PATH = "/meta/metrics";
 
-    public static final String VIEW_PATH = "/metmon/meta/views";
-    public static final String PROCESSES_PATH = "/metmon/meta/processes";
+    public static final String VIEW_PATH = "/meta/views";
+    public static final String PROCESSES_PATH = "/meta/processes";
 
     public static final String PROC_GROUPS_PATH = PROCESSES_PATH + "/procgroups";
 
