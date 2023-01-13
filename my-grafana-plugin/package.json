@@ -20,7 +20,7 @@
     "node": ">=12 <13"
   },
   "dependencies": {
-    "@grafana/runtime": "^6.7.3",
+    "@grafana/runtime": "^9.3.2",
     "typed-rest-client": "^1.7.3"
   }
 }
